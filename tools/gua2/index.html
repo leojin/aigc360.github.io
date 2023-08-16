@@ -1,0 +1,198 @@
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <meta charset="utf-8">
+        <title>GuaLang</title>
+    </head>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            border: 0;
+        }
+        html {
+            background: #EEF;
+        }
+        form {
+        }
+        .container {
+            width: 100%;
+            display: flex;
+            flex-wrap: nowrap;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+        .container-input {
+            position: relative;
+            width: calc(100vw - 260px);
+        }
+        .container-input textarea {
+            position: relative;
+            -webkit-appearance: none;
+            resize: none;
+            width: 100%;
+            border-radius: 10px;
+            vertical-align: top;
+            padding: 10px;
+            outline: none;
+            font-size: 16px;
+            height: 180px;
+        }
+        .container-btn {
+            position: relative;
+            width: 160px;
+        }
+        .container-btn input {
+            position: relative;
+            display: inline-block;
+            border-radius: 10px;
+            border: none;
+            -webkit-appearance: none;
+            vertical-align: top;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            color: #FFF;
+            vertical-align: top;
+        }
+        .container-avator {
+            width: 100px;
+        }
+        .container-avator img{
+            border-radius: 10px;
+            width: 80px;
+            height: 80px;
+        }
+        #human .container-avator img{
+            float: left;
+            margin: 0 0 0 10px;
+            border: 1px solid #6481ea;
+        }
+        #human input {
+            background: #6481ea;
+            margin-right: 10px;
+            float: right;
+        }
+        #human input:hover {
+            background: #3d54a9;
+        }
+        #human textarea {
+            border-color: #6481ea;
+            color: #6481ea;
+        }
+        #human textarea:focus {
+            border-color: #3d54a9;
+        }
+        #gua .container-avator img{
+            float: right;
+            margin: 0 10px 0 0;
+            border: 1px solid #0fa800;
+        }
+        #gua input {
+            background: #0fa800;
+            margin-left: 10px;
+            float: left;
+        }
+        #gua input:hover {
+            background: #0d8a01;
+        }
+        #gua textarea {
+            border-color: #0fa800;
+            color: #0fa800;
+        }
+        #gua textarea:focus {
+            border-color: #0d8a01;
+        }
+        #form {
+            position: relative;
+            width: 100%;
+        }
+        .container-title {
+            width: 320px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 10px;
+        }
+        #title {
+            font-size: 50px;
+            text-shadow: 0px 0px 20px #3d54a9;
+            color: #fff;
+            margin-bottom: 30px;
+        }
+        .container-title ul {
+            margin: 10px 0;
+            padding: 0;
+        }
+        .container-title li {
+            margin: 0 0 10px 0;
+            padding: 0;
+            list-style: none;
+            text-align: center;
+            font-size: 14px;
+            color: #3d54a9;
+        }
+
+    </style>
+    <body>
+        <div class="container-title">
+            <div id="title">GuaLang</div>
+            <ul>
+                <li>Powered by Multimodal LLM.</li>
+                <li>Support 5000+ human language.</li>
+                <li>The future of the earth civilization.</li>
+            </ul>
+        </div>
+        <form id="form">
+            <div id="human" class="container">
+                <div class="container-avator">
+                    <img src="https://leojin-1251158331.cos.ap-shanghai.myqcloud.com/page/aigc360/imgs/29985170_0_final.jpg">
+                </div>
+                <div class="container-input">
+                    <textarea id="text" placeholder="I LOVE U"></textarea>
+                </div>
+                <div class="container-btn">
+                    <input type="submit" value="To GuaLang" data-action="encode">
+                </div>
+            </div>
+            <div id="gua" class="container">
+                <div class="container-btn">
+                    <input type="submit" value="To HumanLang" data-action="decode">
+                </div>
+                <div class="container-input">
+                    <textarea id="text-encode" placeholder="Gua～Gua～ Gua～Gua～GuaGuaGua～Gua Gua～Gua～GuaGuaGua GuaGuaGuaGuaGua Gua～GuaGua～Gua～ GuaGuaGua Gua～Gua～Gua～Gua Gua～ Gua～Gua～GuaGuaGua～Gua Gua～Gua～GuaGuaGua GuaGuaGuaGuaGua Gua～Gua～Gua"></textarea>
+                </div>
+                <div class="container-avator">
+                    <img src="https://leojin-1251158331.cos.ap-shanghai.myqcloud.com/page/aigc360/imgs/0b13bc0008bf5847790c5ee5f7d216cb.jpeg">
+                </div>
+            </div>
+        </form>
+    </body>
+    <script src="https://leojin-1251158331.cos.ap-shanghai.myqcloud.com/page/aigc360/js/mor.min.js"></script>
+    <script>
+        morjs.defaults.mode = 'simple';
+        morjs.modes.foo = {
+            charSpacer:   '',
+            letterSpacer: ' ',
+            longString:   'Gua',
+            shortString:  'Gua～',
+            wordSpacer:   '   '
+        };
+        var options = {mode: 'foo'};
+        var form = document.getElementById('form');
+        var fieldDecode = document.getElementById('text');
+        var fieldEncode = document.getElementById('text-encode');
+        form.addEventListener('click', function (ev) {
+            ev.preventDefault();
+            var action = ev.target.getAttribute('data-action');
+            if (action == "encode") {
+                var input = fieldDecode.value;
+                var output = morjs.encode(encodeURIComponent(input).replaceAll('%', '_'), options);
+                fieldEncode.value = output;
+            } else if (action == "decode") {
+                var input = fieldEncode.value;
+                var output = decodeURIComponent(morjs.decode(input, options).replaceAll('_', '%'));
+                fieldDecode.value = output;
+            }
+        });
+    </script>
+</html>
