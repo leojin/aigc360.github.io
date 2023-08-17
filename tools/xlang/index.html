@@ -67,6 +67,18 @@
         .container-avator {
             width: 100px;
         }
+        #obj-x-copy {
+            font-size: 16px;
+            float: right;
+            margin-top: 10px;
+            margin-right: 10px;
+            width: 80px;
+            line-height: 30px;
+            text-align: center;
+            color: #fff;
+            border-radius: 10px;
+            cursor: pointer;
+        }
         .container-avator img{
             border-radius: 10px;
             width: 80px;
@@ -201,6 +213,7 @@
                 </div>
                 <div class="container-avator">
                     <img id="obj-x-avator" src="">
+                    <div id="obj-x-copy">COPY</div>
                 </div>
             </div>
         </form>
@@ -397,10 +410,18 @@
                     }
                 });
             };
+            var _initCopy = function () {
+                var objXCopy = document.getElementById('obj-x-copy');
+                var fieldEncode = document.getElementById('text-encode');
+                objXCopy.addEventListener('click', function () {
+                    navigator.clipboard.writeText(fieldEncode.value);
+                });
+            };
             var init = function (config) {
                 _config = config;
                 _initMorjs();
                 _initForm();
+                _initCopy();
             };
             var change = function (key) {
                 var cnf = _config[key];
@@ -421,6 +442,9 @@
                 objXText.style.border = '1px solid ' + cnf.theme.color;
                 objXText.style.color = cnf.theme.color;
                 objXText.placeholder = cnf.theme.placeholder;
+
+                var objXCopy = document.getElementById('obj-x-copy');
+                objXCopy.style.background = cnf.theme.color;
 
                 var objXSubmit = document.getElementById('obj-x-submit');
                 objXSubmit.style.background = cnf.theme.color;
