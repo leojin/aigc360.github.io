@@ -1,0 +1,447 @@
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <meta charset="utf-8">
+        <title>XLang</title>
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-N68BM38YB4"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'G-N68BM38YB4');
+        </script>
+    </head>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            border: 0;
+        }
+        html {
+            background: #EEF;
+        }
+        form {
+        }
+        .container {
+            width: 100%;
+            display: flex;
+            flex-wrap: nowrap;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+        .container-input {
+            position: relative;
+            width: calc(100vw - 260px);
+        }
+        .container-input textarea {
+            position: relative;
+            -webkit-appearance: none;
+            resize: none;
+            width: 100%;
+            border-radius: 10px;
+            vertical-align: top;
+            padding: 10px;
+            outline: none;
+            font-size: 16px;
+            height: 180px;
+        }
+        .container-btn {
+            position: relative;
+            width: 160px;
+        }
+        .container-btn input {
+            position: relative;
+            display: inline-block;
+            border-radius: 10px;
+            border: none;
+            -webkit-appearance: none;
+            vertical-align: top;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            color: #FFF;
+            vertical-align: top;
+        }
+        .container-avator {
+            width: 100px;
+        }
+        .container-avator img{
+            border-radius: 10px;
+            width: 80px;
+            height: 80px;
+        }
+        #human .container-avator img{
+            float: left;
+            margin: 0 0 0 10px;
+            border: 1px solid #6481ea;
+        }
+        #human input {
+            background: #6481ea;
+            margin-right: 10px;
+            float: right;
+        }
+        #human input:hover {
+            background: #3d54a9;
+        }
+        #human textarea {
+            border-color: #6481ea;
+            color: #6481ea;
+        }
+        #human textarea:focus {
+            border-color: #3d54a9;
+        }
+
+        #x .container-avator img{
+            float: right;
+            margin: 0 10px 0 0;
+        }
+        #x input {
+            margin-left: 10px;
+            float: left;
+        }
+        #x input:hover {
+            filter: grayscale(50%);
+        }
+        #form {
+            position: relative;
+            width: 100%;
+        }
+
+
+    </style>
+    <body>
+        <style>
+            #container-menu {
+                left: 0;
+                top: 0;
+                cursor: pointer;
+            }
+            #container-menu select,
+            #container-menu option {
+                -webkit-appearance: none;
+                margin: 0;
+                padding: 0;
+                border-radius: 5px;
+                border: none;
+                outline: none;
+            }
+            #container-menu select {
+                margin: 10px;
+                font-size: 12px;
+                line-height: 30px;
+                padding: 0 5px;
+                text-align: center;
+                color: #6481ea;
+                border: 1px solid #6481ea;
+                background-color: rgba(0,0,0,0);
+                cursor: pointer;
+            }
+            .container-menu-icon {
+                display: block;
+                float: left;
+                width: 15px;
+                height: 32px;
+                margin: 10px 0 0 10px;
+            }
+            .container-menu-icon span {
+                display: block;
+                width: 15px;
+                height: 2px;
+                background-color: #6481ea;
+                margin-top: 6px;
+                margin-bottom: 6px;
+            }
+        </style>
+        <div id="container-menu">
+            <span class="container-menu-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </span>
+            <select></select>
+        </div>
+
+        <style>
+            .container-title {
+                width: 320px;
+                margin: 0 auto;
+                text-align: center;
+                padding: 10px;
+            }
+            #obj-title {
+                font-size: 50px;
+                text-shadow: 0px 0px 20px #3d54a9;
+                color: #fff;
+                margin-bottom: 30px;
+            }
+        </style>
+        <div class="container-title">
+            <div id="obj-title"></div>
+        </div>
+        <form id="form">
+            <div id="human" class="container">
+                <div class="container-avator">
+                    <img src="https://leojin-1251158331.cos.ap-shanghai.myqcloud.com/page/aigc360/imgs/29985170_0_final.jpg">
+                </div>
+                <div class="container-input">
+                    <textarea id="text" placeholder="I LOVE U"></textarea>
+                </div>
+                <div class="container-btn">
+                    <input type="submit" value="" data-action="encode" id="obj-human-submit">
+                </div>
+            </div>
+            <div id="x" class="container">
+                <div class="container-btn">
+                    <input type="submit" value="To HumanLang" data-action="decode" id="obj-x-submit">
+                </div>
+                <div class="container-input">
+                    <textarea id="text-encode" placeholder=""></textarea>
+                </div>
+                <div class="container-avator">
+                    <img id="obj-x-avator" src="">
+                </div>
+            </div>
+        </form>
+    </body>
+    <script src="https://leojin-1251158331.cos.ap-shanghai.myqcloud.com/page/aigc360/js/mor.min.js"></script>
+
+    <script>
+        var config = {
+            'gua': {
+                name: 'GuaLang',
+                morjs: {
+                    charSpacer: '',
+                    letterSpacer: ' ',
+                    longString: 'Gua',
+                    shortString: 'Gua～',
+                    wordSpacer: '   '
+                },
+                theme: {
+                    color: '#0fa800',
+                    colorHover: '#0d8a01',
+                    avator: 'https://leojin-1251158331.cos.ap-shanghai.myqcloud.com/page/aigc360/imgs/0b13bc0008bf5847790c5ee5f7d216cb.jpeg',
+                    placeholder: 'GuaGua～'
+                }
+            },
+            'gua_zh': {
+                name: '呱语',
+                morjs: {
+                    charSpacer: '',
+                    letterSpacer: ' ',
+                    longString: '呱',
+                    shortString: '呱～',
+                    wordSpacer: '   '
+                },
+                theme: {
+                    color: '#0fa800',
+                    colorHover: '#0d8a01',
+                    avator: 'https://leojin-1251158331.cos.ap-shanghai.myqcloud.com/page/aigc360/imgs/0b13bc0008bf5847790c5ee5f7d216cb.jpeg',
+                    placeholder: '呱呱～'
+                }
+            },
+            'miao': {
+                name: 'MiaoLang',
+                morjs: {
+                    charSpacer: '',
+                    letterSpacer: ' ',
+                    longString: 'Miao',
+                    shortString: 'MiaoMiao～',
+                    wordSpacer: '   '
+                },
+                theme: {
+                    color: '#263565',
+                    colorHover: '#202948',
+                    avator: 'https://leojin-1251158331.cos.ap-shanghai.myqcloud.com/page/aigc360/imgs/miao.jpg',
+                    placeholder: 'Miao~'
+                }
+            },
+            'miao_zh': {
+                name: '喵语',
+                morjs: {
+                    charSpacer: '',
+                    letterSpacer: ' ',
+                    longString: '喵',
+                    shortString: '喵～',
+                    wordSpacer: '   '
+                },
+                theme: {
+                    color: '#263565',
+                    colorHover: '#202948',
+                    avator: 'https://leojin-1251158331.cos.ap-shanghai.myqcloud.com/page/aigc360/imgs/miao.jpg',
+                    placeholder: '喵喵～'
+                }
+            },
+            'bird': {
+                name: 'BirdLang',
+                morjs: {
+                    charSpacer: '',
+                    letterSpacer: ' ',
+                    longString: 'Zha',
+                    shortString: 'ZhaZha～',
+                    wordSpacer: '   '
+                },
+                theme: {
+                    color: '#ff8700',
+                    colorHover: '#ff4500',
+                    avator: 'https://leojin-1251158331.cos.ap-shanghai.myqcloud.com/page/aigc360/imgs/103733821_0_final.jpg',
+                    placeholder: 'Zha~'
+                }
+            },
+            'bird_zh': {
+                name: '鸟语',
+                morjs: {
+                    charSpacer: '',
+                    letterSpacer: ' ',
+                    longString: '喳',
+                    shortString: '喳～',
+                    wordSpacer: '   '
+                },
+                theme: {
+                    color: '#ff8700',
+                    colorHover: '#ff4500',
+                    avator: 'https://leojin-1251158331.cos.ap-shanghai.myqcloud.com/page/aigc360/imgs/103733821_0_final.jpg',
+                    placeholder: '喳喳～'
+                }
+            },
+            'pig': {
+                name: 'PigLang',
+                morjs: {
+                    charSpacer: '',
+                    letterSpacer: ' ',
+                    longString: 'Oink',
+                    shortString: 'OinkOink～',
+                    wordSpacer: '   '
+                },
+                theme: {
+                    color: '#ff8686',
+                    colorHover: '#ff3c3c',
+                    avator: 'https://leojin-1251158331.cos.ap-shanghai.myqcloud.com/page/aigc360/imgs/103734170_0_final.jpg',
+                    placeholder: 'Oink~'
+                }
+            },
+            'pig_zh': {
+                name: '猪猪语',
+                morjs: {
+                    charSpacer: '',
+                    letterSpacer: ' ',
+                    longString: '噜',
+                    shortString: '噜～',
+                    wordSpacer: '   '
+                },
+                theme: {
+                    color: '#ff8686',
+                    colorHover: '#ff3c3c',
+                    avator: 'https://leojin-1251158331.cos.ap-shanghai.myqcloud.com/page/aigc360/imgs/103734170_0_final.jpg',
+                    placeholder: '噜噜～'
+                }
+            }
+        };
+    </script>
+
+    <script>
+        var menu = function (containerId) {
+            var callback = null;
+            var container = document.getElementById(containerId);
+            var containerSelect = container.getElementsByTagName('select')[0];
+            containerSelect.innerHTML = '';
+            var init = function (config) {
+                for (var key in config) {
+                    var cnf = config[key];
+                    var option = document.createElement('option');
+                    option.value = key;
+                    option.text = cnf.name;
+                    containerSelect.appendChild(option);
+                }
+                containerSelect.addEventListener("change", function (ev) {
+                    callback && callback(ev.target.value);
+                });
+            };
+            var setCallback = function (cb) {
+                callback = cb;
+            };
+            return {
+                init: init,
+                setCallback: setCallback
+            };
+        }("container-menu");
+
+        var app = function () {
+            var _config = {};
+            var _modeName = '';
+
+            var _initMorjs = function () {
+                morjs.defaults.mode = 'simple';
+                for (var key in _config) {
+                    var cnf = _config[key];
+                    morjs.modes[key] = cnf.morjs;
+                }
+            };
+            var _initForm = function () {
+                var fieldDecode = document.getElementById('text');
+                var fieldEncode = document.getElementById('text-encode');
+                var form = document.getElementById('form');
+                form.addEventListener('submit', function (ev) {
+                    ev.preventDefault();
+                    var action = ev.submitter.getAttribute('data-action');
+                    var options = {mode: _modeName};
+                    if (action == "encode") {
+                        var input = fieldDecode.value;
+                        var output = morjs.encode(encodeURIComponent(input).replaceAll('%', '_'), options);
+                        fieldEncode.value = output;
+                    } else if (action == "decode") {
+                        var input = fieldEncode.value;
+                        var output = decodeURIComponent(morjs.decode(input, options).replaceAll('_', '%'));
+                        fieldDecode.value = output;
+                    }
+                });
+            };
+            var init = function (config) {
+                _config = config;
+                _initMorjs();
+                _initForm();
+            };
+            var change = function (key) {
+                var cnf = _config[key];
+                if (!cnf) {
+                    return;
+                }
+                _modeName = key;
+
+                var objTitle = document.getElementById('obj-title')
+                objTitle.innerText = cnf.name;
+
+                var objXAvator = document.getElementById('obj-x-avator');
+                objXAvator.src = cnf.theme.avator;
+                objXAvator.style.border = '1px solid ' + cnf.theme.color;
+
+                var objXText = document.getElementById('text-encode');
+                objXText.value = '';
+                objXText.style.border = '1px solid ' + cnf.theme.color;
+                objXText.style.color = cnf.theme.color;
+                objXText.placeholder = cnf.theme.placeholder;
+
+                var objXSubmit = document.getElementById('obj-x-submit');
+                objXSubmit.style.background = cnf.theme.color;
+
+                var objHumanSubmit = document.getElementById('obj-human-submit');
+                objHumanSubmit.value = 'To ' + cnf.name;
+
+                objHumanSubmit.click();
+
+            };
+            return {
+                init: init,
+                change: change
+            };
+        }();
+        menu.init(config);
+        app.init(config);
+        menu.setCallback(app.change);
+        for (var key in config) {
+            app.change(key);
+            break;
+        }
+    </script>
+</html>
