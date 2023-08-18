@@ -280,9 +280,9 @@
                     wordSpacer: '   '
                 },
                 theme: {
-                    color: '#263565',
+                    color: '#D7B08F',
                     colorHover: '#202948',
-                    avator: 'https://leojin-1251158331.cos.ap-shanghai.myqcloud.com/page/aigc360/imgs/miao.jpg',
+                    avator: 'https://leojin-1251158331.cos.ap-shanghai.myqcloud.com/page/aigc360/imgs/miao2.jpeg',
                     placeholder: '喵喵～'
                 }
             },
@@ -348,6 +348,22 @@
                     colorHover: '#ff3c3c',
                     avator: 'https://leojin-1251158331.cos.ap-shanghai.myqcloud.com/page/aigc360/imgs/103734170_0_final.jpg',
                     placeholder: '噜噜～'
+                }
+            },
+            'kun': {
+                name: 'KunLang',
+                morjs: {
+                    charSpacer: '',
+                    letterSpacer: ' ',
+                    longString: '你干嘛',
+                    shortString: '你干嘛～',
+                    wordSpacer: '   '
+                },
+                theme: {
+                    color: '#999999',
+                    colorHover: '#666666',
+                    avator: 'https://leojin-1251158331.cos.ap-shanghai.myqcloud.com/page/aigc360/imgs/103868213_0_final.jpg',
+                    placeholder: '你干嘛你干嘛～'
                 }
             }
         };
@@ -430,6 +446,7 @@
                     return;
                 }
                 _modeName = key;
+                window.location.hash = '#' + key;
 
                 var objTitle = document.getElementById('obj-title')
                 objTitle.innerText = cnf.name;
@@ -464,9 +481,15 @@
         menu.init(config);
         app.init(config);
         menu.setCallback(app.change);
-        for (var key in config) {
-            app.change(key);
-            break;
+        var hashKey = window.location.hash.slice(1);
+        if (hashKey in config) {
+            app.change(hashKey);
+        } else {
+            for (var key in config) {
+                app.change(key);
+                break;
+            }   
         }
+
     </script>
 </html>
