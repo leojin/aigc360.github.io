@@ -390,9 +390,13 @@
             var setCallback = function (cb) {
                 callback = cb;
             };
+            var setValue = function (key) {
+                containerSelect.value = key;
+            };
             return {
                 init: init,
-                setCallback: setCallback
+                setCallback: setCallback,
+                setValue: setValue
             };
         }("container-menu");
 
@@ -484,9 +488,11 @@
         var hashKey = window.location.hash.slice(1);
         if (hashKey in config) {
             app.change(hashKey);
+            menu.setValue(hashKey);
         } else {
             for (var key in config) {
                 app.change(key);
+                menu.setValue(key);
                 break;
             }   
         }
