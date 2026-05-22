@@ -1,0 +1,1924 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dive Into JSON</title>
+    <style>
+        :root {
+            --bg: #f5f7fb;
+            --panel: #ffffff;
+            --line: #d9e1ee;
+            --text: #172033;
+            --muted: #68748a;
+            --primary: #2f6df6;
+            --primary-dark: #1d55cf;
+            --danger: #d83933;
+            --danger-bg: #fff1f0;
+            --soft: #f1f4f9;
+            --field: #fbfcff;
+            --card: #fbfcff;
+            --value-text: #101828;
+            --path-text: #304669;
+            --shadow: 0 14px 40px rgba(30, 45, 75, 0.08);
+        }
+
+        body.dark {
+            --bg: #0b1020;
+            --panel: #111827;
+            --line: #293449;
+            --text: #e5edf8;
+            --muted: #9aa7ba;
+            --primary: #60a5fa;
+            --primary-dark: #3b82f6;
+            --danger: #f87171;
+            --danger-bg: #3b1f24;
+            --soft: #1d2638;
+            --field: #0f172a;
+            --card: #141e31;
+            --value-text: #e5edf8;
+            --path-text: #9ec5ff;
+            --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            color: var(--text);
+            background: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        body {
+            padding: 22px;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+        }
+
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-self: end;
+            width: 56px;
+            height: 32px;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            border-radius: 999px;
+            padding: 3px;
+            background: linear-gradient(180deg, #dbeafe, #fef3c7);
+            box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.9), 0 10px 24px rgba(30, 45, 75, 0.18);
+            cursor: pointer;
+        }
+
+        .theme-toggle .theme-knob {
+            display: grid;
+            place-items: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #fff7ad;
+            box-shadow: inset -4px -4px 8px rgba(255, 166, 0, 0.25), inset 3px 3px 5px rgba(255, 255, 255, 0.9), 0 4px 10px rgba(30, 45, 75, 0.25);
+            transform: translateX(0);
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .theme-toggle .theme-icon {
+            font-size: 13px;
+            line-height: 1;
+        }
+
+        body.dark .theme-toggle {
+            background: linear-gradient(180deg, #172554, #0f172a);
+            box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.08), 0 10px 24px rgba(0, 0, 0, 0.32);
+        }
+
+        body.dark .theme-toggle .theme-knob {
+            background: #dbeafe;
+            transform: translateX(26px);
+            box-shadow: inset -5px -5px 8px rgba(30, 64, 175, 0.18), inset 3px 3px 5px rgba(255, 255, 255, 0.85), 0 4px 12px rgba(0, 0, 0, 0.42);
+        }
+
+        .app {
+            display: grid;
+            grid-template-columns: 720px minmax(420px, 1fr);
+            gap: 18px;
+            width: 100%;
+            height: calc(100vh - 44px);
+            min-height: 0;
+            margin: 0;
+        }
+
+        .left-stack {
+            display: grid;
+            grid-template-columns: 240px 460px;
+            gap: 18px;
+            height: 100%;
+            min-width: 0;
+            min-height: 0;
+            width: 720px;
+        }
+
+        .panel {
+            min-width: 0;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--panel);
+            box-shadow: var(--shadow);
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            grid-column: 2;
+            grid-row: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .history-panel {
+            display: flex;
+            flex-direction: column;
+            grid-column: 1;
+            grid-row: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            height: 72px;
+            flex: 0 0 72px;
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .head-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .workspace-actions {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            padding: 14px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .brand-logo {
+            display: grid;
+            grid-template-columns: 38px minmax(0, 1fr) 32px;
+            align-items: center;
+            gap: 9px;
+            min-height: 72px;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--line);
+            background:
+                linear-gradient(135deg, rgba(47, 109, 246, 0.12), rgba(10, 127, 115, 0.08)),
+                var(--panel);
+        }
+
+        .brand-mark {
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            color: #fff;
+            background: linear-gradient(135deg, #2f6df6, #0a7f73);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 0;
+            box-shadow: 0 10px 22px rgba(47, 109, 246, 0.24);
+        }
+
+        .brand-name {
+            min-width: 0;
+            color: transparent;
+            background: linear-gradient(135deg, #1f2937 0%, #2f6df6 44%, #0a7f73 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            font-size: 16px;
+            font-weight: 800;
+            line-height: 1.18;
+            text-wrap: balance;
+            text-shadow: 0 10px 24px rgba(47, 109, 246, 0.16);
+        }
+
+        body.dark .brand-name {
+            background: linear-gradient(135deg, #f8fafc 0%, #93c5fd 48%, #5eead4 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            text-shadow: 0 10px 28px rgba(96, 165, 250, 0.28);
+        }
+
+        .help-button {
+            display: grid;
+            place-items: center;
+            width: 32px;
+            height: 32px;
+            border: 1px solid rgba(47, 109, 246, 0.45);
+            border-radius: 50%;
+            color: var(--primary);
+            background: rgba(255, 255, 255, 0.72);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        .help-button:hover {
+            background: var(--panel);
+            border-color: var(--primary);
+        }
+
+        .help-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 20;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(15, 23, 42, 0.36);
+        }
+
+        .help-modal.open {
+            display: flex;
+        }
+
+        .help-dialog {
+            width: min(760px, 100%);
+            max-height: min(720px, calc(100vh - 48px));
+            overflow: auto;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--panel);
+            box-shadow: 0 24px 80px rgba(15, 23, 42, 0.28);
+        }
+
+        .help-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .help-close {
+            width: 32px;
+            height: 32px;
+            border: 0;
+            border-radius: 8px;
+            color: var(--muted);
+            background: var(--soft);
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .help-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 12px 18px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .help-tab {
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 6px 12px;
+            color: var(--muted);
+            background: var(--panel);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 650;
+        }
+
+        .help-tab.active {
+            color: #fff;
+            border-color: var(--primary);
+            background: var(--primary);
+        }
+
+        .help-body {
+            padding: 18px;
+        }
+
+        .help-content {
+            display: none;
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.65;
+        }
+
+        .help-content.active {
+            display: block;
+        }
+
+        .help-content ul {
+            margin: 10px 0 0;
+            padding-left: 20px;
+        }
+
+        .donate-box {
+            margin: 18px;
+            padding: 14px;
+            border: 1px solid #c7d2fe;
+            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(47, 109, 246, 0.08), rgba(10, 127, 115, 0.06));
+        }
+
+        .donate-box p {
+            display: none;
+            margin: 0 0 10px;
+            color: var(--path-text);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .donate-box p.active {
+            display: block;
+        }
+
+        .donate-button {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 38px;
+            border-radius: 8px;
+            padding: 8px 14px;
+            color: #fff;
+            background: #003087;
+            font-size: 14px;
+            font-weight: 750;
+            text-decoration: none;
+        }
+
+        .donate-button.active {
+            display: inline-flex;
+        }
+
+        .donate-button:hover {
+            background: #001f5c;
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+            letter-spacing: 0;
+        }
+
+        h2 {
+            font-size: 16px;
+            line-height: 1.3;
+        }
+
+        h3 {
+            font-size: 15px;
+            line-height: 1.3;
+        }
+
+        .status {
+            min-height: 24px;
+            padding: 2px 10px;
+            border-radius: 999px;
+            color: var(--muted);
+            background: var(--soft);
+            font-size: 13px;
+            line-height: 20px;
+            white-space: nowrap;
+        }
+
+        .status.error {
+            color: var(--danger);
+            background: var(--danger-bg);
+        }
+
+        .status.success {
+            color: #116329;
+            background: #dafbe1;
+        }
+
+        body.dark .status.success {
+            color: #86efac;
+            background: #12351f;
+        }
+
+        .path-mode {
+            display: inline-grid;
+            grid-template-columns: 1fr 1fr;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--soft);
+        }
+
+        .path-mode button {
+            min-width: 82px;
+            height: 32px;
+            border: 0;
+            padding: 0 10px;
+            color: var(--muted);
+            background: transparent;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 650;
+        }
+
+        .path-mode button.active {
+            color: #fff;
+            background: var(--primary);
+        }
+
+        .editor-wrap {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            padding: 14px;
+        }
+
+        #jsonInput {
+            width: 100%;
+            min-height: 360px;
+            resize: none;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 14px;
+            outline: none;
+            color: var(--value-text);
+            background: var(--field);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.55;
+            tab-size: 2;
+        }
+
+        #jsonInput:focus,
+        .query-type:focus,
+        .query-value:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(47, 109, 246, 0.12);
+        }
+
+        .query-area {
+            border-top: 1px solid var(--line);
+            padding: 14px;
+        }
+
+        .query-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .add-button,
+        .delete-button,
+        .history-button,
+        .history-delete {
+            border: 0;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .add-button,
+        .history-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-width: 0;
+            padding: 8px 10px;
+            color: #fff;
+            background: var(--primary);
+            font-size: 13px;
+            font-weight: 650;
+        }
+
+        .button-icon {
+            flex: 0 0 auto;
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        #newHistory {
+            background: #475569;
+        }
+
+        #newHistory:hover {
+            background: #334155;
+        }
+
+        #saveHistory {
+            background: #1a7f37;
+        }
+
+        #saveHistory:hover {
+            background: #116329;
+        }
+
+        #saveAsHistory {
+            background: #7c3aed;
+        }
+
+        #saveAsHistory:hover {
+            background: #6d28d9;
+        }
+
+        .add-button:hover,
+        .history-button:hover {
+            background: var(--primary-dark);
+        }
+
+        .history-list {
+            display: grid;
+            align-content: start;
+            gap: 10px;
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+            padding: 14px;
+        }
+
+        .history-item {
+            display: grid;
+            gap: 8px;
+            min-width: 0;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 10px;
+            background: var(--card);
+        }
+
+        .history-item.active {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(47, 109, 246, 0.1);
+        }
+
+        .history-main {
+            min-width: 0;
+            width: 100%;
+            border: 0;
+            padding: 0;
+            color: var(--text);
+            background: transparent;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .history-title {
+            display: -webkit-box;
+            overflow: hidden;
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 650;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+        }
+
+        .history-meta {
+            display: block;
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .history-delete {
+            width: 100%;
+            height: 30px;
+            color: var(--danger);
+            background: var(--danger-bg);
+            font-size: 12px;
+            font-weight: 650;
+        }
+
+        .history-delete:hover {
+            background: var(--danger-bg);
+            filter: brightness(0.96);
+        }
+
+        .query-list {
+            display: grid;
+            gap: 10px;
+            max-height: 260px;
+            overflow: auto;
+            padding-right: 2px;
+        }
+
+        .query-row {
+            display: grid;
+            grid-template-columns: 12px 74px 86px minmax(120px, 1fr) 56px;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .color-dot {
+            width: 10px;
+            height: 28px;
+            border-radius: 999px;
+            background: var(--query-color);
+        }
+
+        .query-target,
+        .query-type,
+        .query-value {
+            width: 100%;
+            height: 38px;
+            min-width: 0;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            outline: none;
+            background: var(--field);
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        .query-target,
+        .query-type {
+            padding: 0 10px;
+            cursor: pointer;
+        }
+
+        .query-value {
+            padding: 0 11px;
+        }
+
+        .delete-button {
+            height: 38px;
+            color: var(--danger);
+            background: var(--danger-bg);
+            font-size: 12px;
+            font-weight: 650;
+        }
+
+        .delete-button:hover {
+            background: var(--danger-bg);
+            filter: brightness(0.96);
+        }
+
+        .results-panel {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .results {
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+            padding: 14px;
+        }
+
+        .empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 220px;
+            border: 1px dashed var(--line);
+            border-radius: 8px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .result-section {
+            border: 1px solid var(--line);
+            border-left: 5px solid var(--query-color);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--panel);
+        }
+
+        .result-section + .result-section {
+            margin-top: 12px;
+        }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--line);
+            background: var(--card);
+        }
+
+        .query-label {
+            min-width: 0;
+            color: var(--query-color);
+            overflow-wrap: anywhere;
+        }
+
+        .match-count {
+            flex: 0 0 auto;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .matches {
+            display: grid;
+            gap: 8px;
+            padding: 12px 14px 14px;
+        }
+
+        .match-row {
+            display: grid;
+            grid-template-columns: minmax(180px, 36%) minmax(220px, 1fr);
+            gap: 10px;
+            align-items: start;
+            padding: 10px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--panel);
+        }
+
+        .path,
+        .value {
+            min-width: 0;
+            overflow-wrap: anywhere;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .copyable {
+            position: relative;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .copyable:hover {
+            background: rgba(47, 109, 246, 0.08);
+        }
+
+        .copyable::after {
+            content: "Click to copy";
+            position: absolute;
+            top: -24px;
+            right: 0;
+            display: none;
+            border-radius: 999px;
+            padding: 3px 8px;
+            color: #fff;
+            background: rgba(15, 23, 42, 0.86);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-size: 11px;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+
+        .copyable:hover::after {
+            display: block;
+        }
+
+        .copy-toast {
+            position: fixed;
+            left: 50%;
+            bottom: 22px;
+            z-index: 30;
+            transform: translateX(-50%) translateY(12px);
+            opacity: 0;
+            border-radius: 999px;
+            padding: 8px 14px;
+            color: #fff;
+            background: rgba(15, 23, 42, 0.9);
+            font-size: 13px;
+            font-weight: 650;
+            pointer-events: none;
+            transition: opacity 0.16s ease, transform 0.16s ease;
+        }
+
+        .copy-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .path {
+            color: var(--path-text);
+        }
+
+        .value {
+            color: var(--value-text);
+            white-space: pre-wrap;
+        }
+
+        .highlight {
+            display: inline;
+            border-radius: 4px;
+            padding: 0 2px;
+            color: #fff;
+            background: var(--query-color);
+        }
+
+        .no-match {
+            padding: 14px;
+            color: var(--muted);
+        }
+
+        @media (max-width: 920px) {
+            body {
+                padding: 12px;
+            }
+
+            .app {
+                grid-template-columns: 1fr;
+                height: calc(100vh - 24px);
+                min-height: 0;
+                overflow: auto;
+            }
+
+            .left-stack {
+                width: 100%;
+                height: auto;
+                grid-template-columns: 1fr;
+            }
+
+            .left-panel,
+            .history-panel {
+                grid-column: auto;
+                grid-row: auto;
+            }
+
+            .history-list {
+                max-height: 220px;
+                flex: none;
+            }
+
+            #jsonInput {
+                min-height: 320px;
+            }
+
+            .match-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .panel-head,
+            .query-title,
+            .section-head {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .panel-head {
+                height: auto;
+                flex-basis: auto;
+            }
+
+            .query-row {
+                grid-template-columns: 12px 1fr 1fr;
+            }
+
+            .query-value,
+            .delete-button {
+                grid-column: 2 / 4;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="app">
+        <div class="left-stack">
+            <section class="panel left-panel" aria-label="JSON input and search queries">
+                <div class="panel-head">
+                    <h2>Input JSON</h2>
+                    <button id="formatJson" class="add-button" type="button">Format</button>
+                </div>
+                <div class="editor-wrap">
+                    <textarea id="jsonInput" spellcheck="false" placeholder="Paste long, complex JSON here"></textarea>
+                </div>
+                <div class="query-area">
+                    <div class="query-title">
+                        <h2>Search</h2>
+                        <button id="addQuery" class="add-button" type="button">Add</button>
+                    </div>
+                    <div id="queryList" class="query-list" aria-live="polite"></div>
+                </div>
+            </section>
+
+            <aside class="panel history-panel" aria-label="Workspace">
+                <div class="brand-logo" aria-label="dive into json">
+                    <div class="brand-mark">{ }</div>
+                    <div class="brand-name">Dive Into JSON</div>
+                    <button id="helpOpen" class="help-button" type="button" aria-label="Open help">?</button>
+                </div>
+                <div class="workspace-actions">
+                    <button id="newHistory" class="history-button" type="button"><span class="button-icon">+</span><span>New</span></button>
+                    <button id="saveHistory" class="history-button" type="button"><span class="button-icon">✓</span><span>Save</span></button>
+                    <button id="saveAsHistory" class="history-button" type="button"><span class="button-icon">↗</span><span>Save As</span></button>
+                </div>
+                <div id="historyList" class="history-list" aria-live="polite"></div>
+            </aside>
+        </div>
+
+        <section class="panel results-panel" aria-label="Search results">
+            <div class="panel-head">
+                <h2>Results</h2>
+                <div class="path-mode" aria-label="Result path format">
+                    <button id="pathModePath" class="active" type="button">Path</button>
+                    <button id="pathModeHive" type="button">Hive SQL</button>
+                </div>
+                <div id="parseStatus" class="status">Waiting for JSON</div>
+                <div id="resultSummary" class="status">0 matches</div>
+            </div>
+            <div id="results" class="results"></div>
+        </section>
+    </main>
+
+    <div id="helpModal" class="help-modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+        <div class="help-dialog">
+            <div class="help-head">
+                <h2 id="helpTitle">How to use dive into json</h2>
+                <div class="head-actions">
+                    <button id="themeToggle" class="theme-toggle" type="button" aria-label="Switch to dark mode">
+                        <span class="theme-knob"><span id="themeIcon" class="theme-icon">☀</span></span>
+                    </button>
+                    <button id="helpClose" class="help-close" type="button" aria-label="Close help">×</button>
+                </div>
+            </div>
+            <div class="help-tabs" role="tablist" aria-label="Help language">
+                <button class="help-tab active" type="button" data-lang="en">English</button>
+                <button class="help-tab" type="button" data-lang="zh">中文</button>
+                <button class="help-tab" type="button" data-lang="ja">日本語</button>
+                <button class="help-tab" type="button" data-lang="de">Deutsch</button>
+            </div>
+            <div class="help-body">
+                <div class="help-content active" data-lang="en">
+                    <p>Paste JSON, add search queries, then inspect every matching path and value. The page works fully in your browser and stores workspaces in localStorage.</p>
+                    <ul>
+                        <li>Use Format to pretty-print valid JSON with two-space indentation.</li>
+                        <li>Add multiple searches. Each search has a target, a type, and a term.</li>
+                        <li>Value search checks values by type: str, number, or bool. Example: Value / str / alice finds string values containing alice.</li>
+                        <li>Key search checks object keys. Example: Key / str / user finds userId, userName, and nested keys containing user.</li>
+                        <li>Number search is substring-based after converting numbers to text. Example: Value / number / 42 matches 42 and 42.5.</li>
+                        <li>JSON strings are parsed deeply when possible. A path like $.payload.parse().id means payload was a string containing JSON.</li>
+                        <li>Switch Results between original Path and Hive SQL. Hive output uses data, for example get_json_object(data, '$.user.name').</li>
+                        <li>Use New, Save, and Save As to manage local workspaces. Every workspace keeps its own searches.</li>
+                    </ul>
+                </div>
+                <div class="help-content" data-lang="zh">
+                    <p>粘贴 JSON，添加查找条件，然后查看所有匹配的路径和值。页面完全在浏览器中运行，并使用 localStorage 保存工作区。</p>
+                    <ul>
+                        <li>点击 Format 可以把合法 JSON 格式化为两个空格缩进。</li>
+                        <li>可以添加多个查找项。每个查找项包含查找对象、类型和查找值。</li>
+                        <li>Value 查找会按类型匹配值：str、number、bool。例如 Value / str / alice 会查找包含 alice 的字符串值。</li>
+                        <li>Key 查找会匹配对象字段名。例如 Key / str / user 会找到 userId、userName 以及嵌套 key。</li>
+                        <li>Number 查找会先把数字转成文本再做包含匹配。例如 Value / number / 42 可以匹配 42 和 42.5。</li>
+                        <li>如果字符串可以解析为 JSON，会继续深度查找。路径 $.payload.parse().id 表示 payload 是一段 JSON 字符串。</li>
+                        <li>Results 支持 Path 和 Hive SQL 两种显示。Hive SQL 使用 data 字段，例如 get_json_object(data, '$.user.name')。</li>
+                        <li>使用 New、Save、Save As 管理本地工作区。每个工作区都有自己独立的查找项。</li>
+                    </ul>
+                </div>
+                <div class="help-content" data-lang="ja">
+                    <p>JSON を貼り付け、検索条件を追加すると、一致したパスと値を確認できます。データはブラウザ内で処理され、ワークスペースは localStorage に保存されます。</p>
+                    <ul>
+                        <li>Format で有効な JSON を 2 スペースのインデントに整形できます。</li>
+                        <li>複数の検索条件を追加できます。各条件には検索対象、型、検索語があります。</li>
+                        <li>Value 検索は str、number、bool の型で値を検索します。例: Value / str / alice は alice を含む文字列値を探します。</li>
+                        <li>Key 検索はオブジェクトのキー名を検索します。例: Key / str / user は userId、userName、ネストした key を探します。</li>
+                        <li>Number 検索は数値を文字列化して部分一致します。例: Value / number / 42 は 42 と 42.5 に一致します。</li>
+                        <li>JSON として解析できる文字列はさらに深く検索されます。$.payload.parse().id は payload が JSON 文字列だったことを示します。</li>
+                        <li>Results は Path と Hive SQL を切り替えられます。Hive SQL は data を使います。例: get_json_object(data, '$.user.name')</li>
+                        <li>New、Save、Save As でローカルワークスペースを管理できます。各ワークスペースは独自の検索条件を持ちます。</li>
+                    </ul>
+                </div>
+                <div class="help-content" data-lang="de">
+                    <p>Fuge JSON ein, erstelle Suchabfragen und prufe alle passenden Pfade und Werte. Alles lauft im Browser, Workspaces werden in localStorage gespeichert.</p>
+                    <ul>
+                        <li>Mit Format wird gultiges JSON mit zwei Leerzeichen eingeruckt.</li>
+                        <li>Du kannst mehrere Suchen anlegen. Jede Suche hat Ziel, Typ und Suchwert.</li>
+                        <li>Value-Suche pruft Werte nach Typ: str, number oder bool. Beispiel: Value / str / alice findet String-Werte mit alice.</li>
+                        <li>Key-Suche pruft Objektschlussel. Beispiel: Key / str / user findet userId, userName und verschachtelte Keys mit user.</li>
+                        <li>Number-Suche wandelt Zahlen in Text um und sucht per Teilstring. Beispiel: Value / number / 42 findet 42 und 42.5.</li>
+                        <li>JSON-Strings werden tiefer geparst, wenn moglich. $.payload.parse().id bedeutet, dass payload ein JSON-String war.</li>
+                        <li>Results kann Path oder Hive SQL anzeigen. Hive SQL nutzt data, zum Beispiel get_json_object(data, '$.user.name').</li>
+                        <li>Mit New, Save und Save As verwaltest du lokale Workspaces. Jeder Workspace hat eigene Suchabfragen.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="donate-box">
+                <p class="donate-copy active" data-lang="en">If this tool saves you time, you can support its maintenance with a small PayPal contribution.</p>
+                <p class="donate-copy" data-lang="zh">如果这个工具节省了你的时间，可以通过 PayPal 小额支持它的维护。</p>
+                <p class="donate-copy" data-lang="ja">このツールが役に立った場合は、PayPal で少額の支援ができます。</p>
+                <p class="donate-copy" data-lang="de">Wenn dir dieses Tool Zeit spart, kannst du die Wartung mit einem kleinen PayPal-Beitrag unterstutzen.</p>
+                <a class="donate-button active" data-lang="en" href="https://www.paypal.com/paypalme/leojin0701" target="_blank" rel="noopener noreferrer">Donate with PayPal</a>
+                <a class="donate-button" data-lang="zh" href="https://www.paypal.com/paypalme/leojin0701" target="_blank" rel="noopener noreferrer">通过 PayPal 捐赠</a>
+                <a class="donate-button" data-lang="ja" href="https://www.paypal.com/paypalme/leojin0701" target="_blank" rel="noopener noreferrer">PayPal で支援</a>
+                <a class="donate-button" data-lang="de" href="https://www.paypal.com/paypalme/leojin0701" target="_blank" rel="noopener noreferrer">Mit PayPal spenden</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="copyToast" class="copy-toast" role="status" aria-live="polite">Copied</div>
+
+    <script>
+        (function () {
+            var jsonInput = document.getElementById('jsonInput');
+            var parseStatus = document.getElementById('parseStatus');
+            var queryList = document.getElementById('queryList');
+            var addQueryButton = document.getElementById('addQuery');
+            var formatJsonButton = document.getElementById('formatJson');
+            var saveHistoryButton = document.getElementById('saveHistory');
+            var saveAsHistoryButton = document.getElementById('saveAsHistory');
+            var newHistoryButton = document.getElementById('newHistory');
+            var historyList = document.getElementById('historyList');
+            var results = document.getElementById('results');
+            var resultSummary = document.getElementById('resultSummary');
+            var pathModePathButton = document.getElementById('pathModePath');
+            var pathModeHiveButton = document.getElementById('pathModeHive');
+            var helpOpenButton = document.getElementById('helpOpen');
+            var helpCloseButton = document.getElementById('helpClose');
+            var helpModal = document.getElementById('helpModal');
+            var themeToggleButton = document.getElementById('themeToggle');
+            var themeIcon = document.getElementById('themeIcon');
+            var copyToast = document.getElementById('copyToast');
+            var copyToastTimer = null;
+
+            var storageKeys = {
+                json: 'diveintojson.currentJson',
+                queries: 'diveintojson.queries',
+                history: 'diveintojson.history',
+                theme: 'diveintojson.theme'
+            };
+            var queries = [];
+            var histories = [];
+            var activeHistoryId = '';
+            var currentData = null;
+            var pathMode = 'path';
+            var nextId = 1;
+            var palette = [
+                '#1f6feb', '#0969da', '#8250df', '#bf3989', '#d1242f',
+                '#b35900', '#1a7f37', '#0a7f73', '#0550ae', '#6639ba',
+                '#9a6700', '#116329', '#953800', '#6e7781'
+            ];
+
+            function readStorage(key, fallback) {
+                try {
+                    var raw = localStorage.getItem(key);
+                    return raw ? JSON.parse(raw) : fallback;
+                } catch (error) {
+                    return fallback;
+                }
+            }
+
+            function writeStorage(key, value) {
+                try {
+                    localStorage.setItem(key, JSON.stringify(value));
+                } catch (error) {
+                    // Ignore storage failures so the tool still works in private modes.
+                }
+            }
+
+            function applyTheme(theme) {
+                var isDark = theme === 'dark';
+                document.body.classList.toggle('dark', isDark);
+                themeIcon.textContent = isDark ? '☾' : '☀';
+                themeToggleButton.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+                writeStorage(storageKeys.theme, theme);
+            }
+
+            function createQuery(type, value) {
+                var color = palette[Math.floor(Math.random() * palette.length)];
+                return {
+                    id: nextId++,
+                    mode: 'value',
+                    type: type || 'str',
+                    value: value || '',
+                    color: color
+                };
+            }
+
+            function cloneQueries(list) {
+                return normalizeQueries(list).map(function (query) {
+                    return {
+                        id: query.id,
+                        mode: query.mode,
+                        type: query.type,
+                        value: query.value,
+                        color: query.color
+                    };
+                });
+            }
+
+            function normalizeQueries(list) {
+                if (!Array.isArray(list)) {
+                    return [];
+                }
+                return list.map(function (query) {
+                    return {
+                        id: query.id || nextId++,
+                        mode: query.mode === 'key' ? 'key' : 'value',
+                        type: ['str', 'number', 'bool'].indexOf(query.type) === -1 ? 'str' : query.type,
+                        value: query.value || '',
+                        color: query.color || palette[Math.floor(Math.random() * palette.length)]
+                    };
+                });
+            }
+
+            function resetNextIdFromQueries(list) {
+                nextId = list.reduce(function (max, query) {
+                    return Math.max(max, Number(query.id) || 0);
+                }, 0) + 1;
+            }
+
+            function renderQueries() {
+                queryList.innerHTML = '';
+                queries.forEach(function (query) {
+                    var row = document.createElement('div');
+                    row.className = 'query-row';
+                    row.style.setProperty('--query-color', query.color);
+                    row.dataset.id = String(query.id);
+
+                    var dot = document.createElement('span');
+                    dot.className = 'color-dot';
+
+                    var targetSelect = document.createElement('select');
+                    targetSelect.className = 'query-target';
+                    targetSelect.setAttribute('aria-label', 'Search target');
+                    [
+                        { value: 'value', text: 'Value' },
+                        { value: 'key', text: 'Key' }
+                    ].forEach(function (item) {
+                        var option = document.createElement('option');
+                        option.value = item.value;
+                        option.textContent = item.text;
+                        option.selected = query.mode === item.value;
+                        targetSelect.appendChild(option);
+                    });
+
+                    var select = document.createElement('select');
+                    select.className = 'query-type';
+                    select.setAttribute('aria-label', 'Value type');
+                    ['str', 'number', 'bool'].forEach(function (type) {
+                        var option = document.createElement('option');
+                        option.value = type;
+                        option.textContent = type;
+                        option.selected = query.type === type;
+                        select.appendChild(option);
+                    });
+
+                    var input = document.createElement('input');
+                    input.className = 'query-value';
+                    input.type = 'text';
+                    input.value = query.value;
+                    input.placeholder = getPlaceholder(query);
+                    input.setAttribute('aria-label', 'Search term');
+
+                    var deleteButton = document.createElement('button');
+                    deleteButton.className = 'delete-button';
+                    deleteButton.type = 'button';
+                    deleteButton.textContent = 'Delete';
+
+                    row.appendChild(dot);
+                    row.appendChild(targetSelect);
+                    row.appendChild(select);
+                    row.appendChild(input);
+                    row.appendChild(deleteButton);
+                    queryList.appendChild(row);
+                });
+            }
+
+            function getHistoryTitle(text) {
+                var trimmed = text.trim();
+                if (!trimmed) {
+                    return 'Empty JSON';
+                }
+                return trimmed.replace(/\s+/g, ' ').slice(0, 48);
+            }
+
+            function renderHistory() {
+                historyList.innerHTML = '';
+
+                if (!histories.length) {
+                    historyList.innerHTML = '<div class="empty">No history yet</div>';
+                    return;
+                }
+
+                histories.forEach(function (item) {
+                    var row = document.createElement('div');
+                    row.className = 'history-item';
+                    if (item.id === activeHistoryId) {
+                        row.className += ' active';
+                    }
+                    row.dataset.id = item.id;
+
+                    var main = document.createElement('button');
+                    main.className = 'history-main';
+                    main.type = 'button';
+
+                    var title = document.createElement('span');
+                    title.className = 'history-title';
+                    title.textContent = item.title;
+
+                    var meta = document.createElement('span');
+                    meta.className = 'history-meta';
+                    meta.textContent = new Date(item.updatedAt).toLocaleString();
+
+                    var deleteButton = document.createElement('button');
+                    deleteButton.className = 'history-delete';
+                    deleteButton.type = 'button';
+                    deleteButton.textContent = 'Delete';
+
+                    main.appendChild(title);
+                    main.appendChild(meta);
+                    row.appendChild(main);
+                    row.appendChild(deleteButton);
+                    historyList.appendChild(row);
+                });
+            }
+
+            function persistQueries() {
+                writeStorage(storageKeys.queries, queries);
+                var active = getActiveHistory();
+                if (active) {
+                    active.queries = cloneQueries(queries);
+                    active.updatedAt = Date.now();
+                    persistHistory();
+                    renderHistory();
+                }
+            }
+
+            function persistCurrentJson() {
+                writeStorage(storageKeys.json, jsonInput.value);
+            }
+
+            function persistHistory() {
+                writeStorage(storageKeys.history, histories);
+            }
+
+            function getActiveHistory() {
+                return histories.find(function (item) {
+                    return item.id === activeHistoryId;
+                });
+            }
+
+            function createHistoryItem(text, now) {
+                return {
+                    id: String(now) + '-' + Math.random().toString(16).slice(2),
+                    title: getHistoryTitle(text),
+                    json: text,
+                    queries: cloneQueries(queries),
+                    updatedAt: now
+                };
+            }
+
+            function saveCurrentHistory(forceNew) {
+                var text = jsonInput.value;
+                if (!text.trim()) {
+                    return;
+                }
+
+                var now = Date.now();
+                var activeIndex = histories.findIndex(function (item) {
+                    return item.id === activeHistoryId;
+                });
+
+                if (!forceNew && activeIndex !== -1) {
+                    histories[activeIndex].title = getHistoryTitle(text);
+                    histories[activeIndex].json = text;
+                    histories[activeIndex].queries = cloneQueries(queries);
+                    histories[activeIndex].updatedAt = now;
+                    histories.unshift(histories.splice(activeIndex, 1)[0]);
+                } else if (!forceNew) {
+                    var existingIndex = histories.findIndex(function (item) {
+                        return item.json === text;
+                    });
+                    if (existingIndex !== -1) {
+                        histories[existingIndex].title = getHistoryTitle(text);
+                        histories[existingIndex].queries = cloneQueries(queries);
+                        histories[existingIndex].updatedAt = now;
+                        activeHistoryId = histories[existingIndex].id;
+                        histories.unshift(histories.splice(existingIndex, 1)[0]);
+                    } else {
+                        var savedItem = createHistoryItem(text, now);
+                        histories.unshift(savedItem);
+                        activeHistoryId = savedItem.id;
+                    }
+                } else {
+                    var item = createHistoryItem(text, now);
+                    histories.unshift(item);
+                    activeHistoryId = item.id;
+                }
+
+                histories = histories.slice(0, 30);
+                persistHistory();
+                renderHistory();
+            }
+
+            function getPlaceholder(query) {
+                if (query.mode === 'key') {
+                    return 'Enter key';
+                }
+                if (query.type === 'number') {
+                    return 'Example: 42';
+                }
+                if (query.type === 'bool') {
+                    return 'true / false';
+                }
+                return 'Enter string';
+            }
+
+            function getQueryById(id) {
+                return queries.find(function (query) {
+                    return query.id === id;
+                });
+            }
+
+            function parseTarget(query) {
+                var raw = query.value.trim();
+                if (query.mode === 'key') {
+                    return { ok: query.value.length > 0, value: query.value, comparable: query.value };
+                }
+                if (query.type === 'str') {
+                    return { ok: query.value.length > 0, value: query.value, comparable: query.value };
+                }
+                if (query.type === 'number') {
+                    return { ok: raw.length > 0 && /^[-+0-9.eE]+$/.test(raw), value: raw, comparable: raw };
+                }
+                if (query.type === 'bool') {
+                    return { ok: raw.length > 0, value: raw.toLowerCase(), comparable: raw.toLowerCase() };
+                }
+                return { ok: false };
+            }
+
+            function primitiveType(value) {
+                if (typeof value === 'string') {
+                    return 'str';
+                }
+                if (typeof value === 'number') {
+                    return 'number';
+                }
+                if (typeof value === 'boolean') {
+                    return 'bool';
+                }
+                return '';
+            }
+
+            function isMatch(value, query, target) {
+                if (query.mode === 'key') {
+                    return false;
+                }
+                if (primitiveType(value) !== query.type || !target.ok) {
+                    return false;
+                }
+                if (query.type === 'bool') {
+                    return String(value).toLowerCase().indexOf(target.comparable) !== -1;
+                }
+                return String(value).indexOf(target.comparable) !== -1;
+            }
+
+            function isKeyMatch(key, query, target) {
+                return query.mode === 'key' && target.ok && key.indexOf(target.comparable) !== -1;
+            }
+
+            function formatPathPart(key) {
+                if (/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key)) {
+                    return '.' + key;
+                }
+                return '[' + JSON.stringify(key) + ']';
+            }
+
+            function escapeSqlString(value) {
+                return value.replace(/'/g, "''");
+            }
+
+            function normalizeHiveJsonPath(pathPart) {
+                if (!pathPart) {
+                    return '$';
+                }
+                if (pathPart.charAt(0) === '$') {
+                    return pathPart;
+                }
+                if (pathPart.charAt(0) === '.' || pathPart.charAt(0) === '[') {
+                    return '$' + pathPart;
+                }
+                return '$.' + pathPart;
+            }
+
+            function pathToHiveExpression(path) {
+                return path.split('.parse()').reduce(function (expr, pathPart) {
+                    var jsonPath = normalizeHiveJsonPath(pathPart);
+                    return "get_json_object(" + expr + ", '" + escapeSqlString(jsonPath) + "')";
+                }, 'data');
+            }
+
+            function tryParseJsonString(value) {
+                if (typeof value !== 'string') {
+                    return { ok: false };
+                }
+
+                var trimmed = value.trim();
+                if (!trimmed) {
+                    return { ok: false };
+                }
+
+                try {
+                    return { ok: true, value: JSON.parse(trimmed) };
+                } catch (error) {
+                    return { ok: false };
+                }
+            }
+
+            function walk(value, path, query, target, matches) {
+                var parsed = tryParseJsonString(value);
+                if (parsed.ok) {
+                    var parsedPath = path + '.parse()';
+                    if (typeof parsed.value === 'string') {
+                        if (isMatch(parsed.value, query, target)) {
+                            matches.push({
+                                path: parsedPath,
+                                value: parsed.value
+                            });
+                        }
+                    } else {
+                        walk(parsed.value, parsedPath, query, target, matches);
+                    }
+                    return;
+                }
+
+                if (isMatch(value, query, target)) {
+                    matches.push({
+                        path: path,
+                        value: value
+                    });
+                }
+
+                if (Array.isArray(value)) {
+                    value.forEach(function (item, index) {
+                        walk(item, path + '[' + index + ']', query, target, matches);
+                    });
+                    return;
+                }
+
+                if (value && typeof value === 'object') {
+                    Object.keys(value).forEach(function (key) {
+                        var childPath = path + formatPathPart(key);
+                        if (isKeyMatch(key, query, target)) {
+                            matches.push({
+                                path: childPath,
+                                value: value[key],
+                                kind: 'key'
+                            });
+                        }
+                        walk(value[key], childPath, query, target, matches);
+                    });
+                }
+            }
+
+            function displayValue(value) {
+                return JSON.stringify(value, null, 2);
+            }
+
+            function appendHighlightedText(node, text, needle, ignoreCase) {
+                var source = ignoreCase ? text.toLowerCase() : text;
+                var target = ignoreCase ? needle.toLowerCase() : needle;
+                var start = 0;
+                var index = source.indexOf(target, start);
+
+                if (!target || index === -1) {
+                    node.textContent = text;
+                    return;
+                }
+
+                while (index !== -1) {
+                    if (index > start) {
+                        node.appendChild(document.createTextNode(text.slice(start, index)));
+                    }
+
+                    var mark = document.createElement('span');
+                    mark.className = 'highlight';
+                    mark.textContent = text.slice(index, index + target.length);
+                    node.appendChild(mark);
+
+                    start = index + target.length;
+                    index = source.indexOf(target, start);
+                }
+
+                if (start < text.length) {
+                    node.appendChild(document.createTextNode(text.slice(start)));
+                }
+            }
+
+            function labelFor(query) {
+                var value = query.value === '' ? '(empty)' : query.value;
+                var target = query.mode === 'key' ? 'Key' : 'Value';
+                return target + ' / ' + query.type + ' / ' + value;
+            }
+
+            function displayPath(path) {
+                return pathMode === 'hive' ? pathToHiveExpression(path) : path;
+            }
+
+            function setPathMode(mode) {
+                pathMode = mode;
+                pathModePathButton.classList.toggle('active', mode === 'path');
+                pathModeHiveButton.classList.toggle('active', mode === 'hive');
+                renderResults(currentData);
+            }
+
+            function setHelpLanguage(lang) {
+                document.querySelectorAll('.help-tab').forEach(function (tab) {
+                    tab.classList.toggle('active', tab.dataset.lang === lang);
+                });
+                document.querySelectorAll('.help-content').forEach(function (content) {
+                    content.classList.toggle('active', content.dataset.lang === lang);
+                });
+                document.querySelectorAll('.donate-copy, .donate-button').forEach(function (item) {
+                    item.classList.toggle('active', item.dataset.lang === lang);
+                });
+            }
+
+            function openHelp() {
+                helpModal.classList.add('open');
+            }
+
+            function closeHelp() {
+                helpModal.classList.remove('open');
+            }
+
+            function showCopyToast(message) {
+                copyToast.textContent = message;
+                copyToast.classList.add('show');
+                clearTimeout(copyToastTimer);
+                copyToastTimer = setTimeout(function () {
+                    copyToast.classList.remove('show');
+                }, 1200);
+            }
+
+            function copyText(text) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(function () {
+                        showCopyToast('Copied');
+                    }).catch(function () {
+                        showCopyToast('Copy failed');
+                    });
+                    return;
+                }
+
+                var textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.setAttribute('readonly', '');
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showCopyToast('Copied');
+                } catch (error) {
+                    showCopyToast('Copy failed');
+                }
+                document.body.removeChild(textarea);
+            }
+
+            function formatJsonInput() {
+                var text = jsonInput.value.trim();
+                if (!text) {
+                    update();
+                    return;
+                }
+
+                try {
+                    jsonInput.value = JSON.stringify(JSON.parse(text), null, 2);
+                } catch (error) {
+                    update();
+                    return;
+                }
+
+                update();
+            }
+
+            function renderResults(data) {
+                results.innerHTML = '';
+                var total = 0;
+
+                if (!queries.length) {
+                    results.innerHTML = '<div class="empty">Add a search query to see results</div>';
+                    resultSummary.textContent = '0 matches';
+                    return;
+                }
+
+                queries.forEach(function (query) {
+                    var section = document.createElement('section');
+                    section.className = 'result-section';
+                    section.style.setProperty('--query-color', query.color);
+
+                    var target = parseTarget(query);
+                    var matches = [];
+                    if (data !== null && target.ok) {
+                        walk(data, '$', query, target, matches);
+                    }
+                    total += matches.length;
+
+                    var head = document.createElement('div');
+                    head.className = 'section-head';
+
+                    var title = document.createElement('h3');
+                    title.className = 'query-label';
+                    title.textContent = labelFor(query);
+
+                    var count = document.createElement('div');
+                    count.className = 'match-count';
+                    count.textContent = matches.length + (matches.length === 1 ? ' match' : ' matches');
+
+                    head.appendChild(title);
+                    head.appendChild(count);
+                    section.appendChild(head);
+
+                    if (!target.ok) {
+                        var invalid = document.createElement('div');
+                        invalid.className = 'no-match';
+                        invalid.textContent = 'Invalid search term';
+                        section.appendChild(invalid);
+                    } else if (!matches.length) {
+                        var empty = document.createElement('div');
+                        empty.className = 'no-match';
+                        empty.textContent = 'No matches found';
+                        section.appendChild(empty);
+                    } else {
+                        var matchList = document.createElement('div');
+                        matchList.className = 'matches';
+                        matches.forEach(function (match) {
+                            var row = document.createElement('div');
+                            row.className = 'match-row';
+                            row.style.setProperty('--query-color', query.color);
+
+                            var path = document.createElement('div');
+                            path.className = 'path copyable';
+                            var renderedPath = displayPath(match.path);
+                            path.dataset.copyText = renderedPath;
+                            path.title = 'Click to copy';
+                            if (match.kind === 'key') {
+                                appendHighlightedText(path, renderedPath, target.comparable, false);
+                            } else {
+                                path.textContent = renderedPath;
+                            }
+
+                            var value = document.createElement('div');
+                            value.className = 'value copyable';
+                            var renderedValue = displayValue(match.value);
+                            value.dataset.copyText = renderedValue;
+                            value.title = 'Click to copy';
+                            if (match.kind === 'key') {
+                                value.textContent = renderedValue;
+                            } else {
+                                appendHighlightedText(
+                                    value,
+                                    renderedValue,
+                                    target.comparable,
+                                    query.type === 'bool'
+                                );
+                            }
+
+                            row.appendChild(path);
+                            row.appendChild(value);
+                            matchList.appendChild(row);
+                        });
+                        section.appendChild(matchList);
+                    }
+
+                    results.appendChild(section);
+                });
+
+                resultSummary.textContent = total + (total === 1 ? ' match' : ' matches');
+            }
+
+            function update() {
+                var text = jsonInput.value.trim();
+                persistCurrentJson();
+                if (!text) {
+                    currentData = null;
+                    parseStatus.className = 'status';
+                    parseStatus.textContent = 'Waiting for JSON';
+                    renderResults(null);
+                    return;
+                }
+
+                try {
+                    var data = JSON.parse(text);
+                    currentData = data;
+                    parseStatus.className = 'status success';
+                    parseStatus.textContent = 'JSON valid';
+                    renderResults(data);
+                } catch (error) {
+                    currentData = null;
+                    parseStatus.className = 'status error';
+                    parseStatus.textContent = 'Invalid JSON';
+                    results.innerHTML = '<div class="empty">Fix the JSON before searching</div>';
+                    resultSummary.textContent = '0 matches';
+                }
+            }
+
+            addQueryButton.addEventListener('click', function () {
+                queries.push(createQuery());
+                renderQueries();
+                persistQueries();
+                update();
+                var inputs = queryList.querySelectorAll('.query-value');
+                if (inputs.length) {
+                    inputs[inputs.length - 1].focus();
+                }
+            });
+
+            queryList.addEventListener('input', function (event) {
+                var row = event.target.closest('.query-row');
+                if (!row) {
+                    return;
+                }
+                var query = getQueryById(Number(row.dataset.id));
+                if (!query) {
+                    return;
+                }
+                if (event.target.classList.contains('query-value')) {
+                    query.value = event.target.value;
+                    persistQueries();
+                    update();
+                }
+            });
+
+            queryList.addEventListener('change', function (event) {
+                var row = event.target.closest('.query-row');
+                if (!row) {
+                    return;
+                }
+                var query = getQueryById(Number(row.dataset.id));
+                if (!query) {
+                    return;
+                }
+                if (event.target.classList.contains('query-target')) {
+                    query.mode = event.target.value;
+                    row.querySelector('.query-value').placeholder = getPlaceholder(query);
+                    persistQueries();
+                    update();
+                } else if (event.target.classList.contains('query-type')) {
+                    query.type = event.target.value;
+                    row.querySelector('.query-value').placeholder = getPlaceholder(query);
+                    persistQueries();
+                    update();
+                }
+            });
+
+            queryList.addEventListener('click', function (event) {
+                if (!event.target.classList.contains('delete-button')) {
+                    return;
+                }
+                var row = event.target.closest('.query-row');
+                var id = Number(row.dataset.id);
+                queries = queries.filter(function (query) {
+                    return query.id !== id;
+                });
+                renderQueries();
+                persistQueries();
+                update();
+            });
+
+            jsonInput.addEventListener('input', update);
+            results.addEventListener('click', function (event) {
+                var target = event.target.closest('.copyable');
+                if (!target || !results.contains(target)) {
+                    return;
+                }
+                copyText(target.dataset.copyText || target.textContent);
+            });
+            themeToggleButton.addEventListener('click', function () {
+                applyTheme(document.body.classList.contains('dark') ? 'light' : 'dark');
+            });
+            formatJsonButton.addEventListener('click', formatJsonInput);
+            helpOpenButton.addEventListener('click', openHelp);
+            helpCloseButton.addEventListener('click', closeHelp);
+            helpModal.addEventListener('click', function (event) {
+                if (event.target === helpModal) {
+                    closeHelp();
+                }
+                if (event.target.classList.contains('help-tab')) {
+                    setHelpLanguage(event.target.dataset.lang);
+                }
+            });
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    closeHelp();
+                }
+            });
+            pathModePathButton.addEventListener('click', function () {
+                setPathMode('path');
+            });
+            pathModeHiveButton.addEventListener('click', function () {
+                setPathMode('hive');
+            });
+            saveHistoryButton.addEventListener('click', function () {
+                saveCurrentHistory(false);
+            });
+            saveAsHistoryButton.addEventListener('click', function () {
+                saveCurrentHistory(true);
+            });
+            newHistoryButton.addEventListener('click', function () {
+                activeHistoryId = '';
+                jsonInput.value = '';
+                queries = [createQuery('str', '')];
+                writeStorage(storageKeys.queries, queries);
+                persistCurrentJson();
+                renderHistory();
+                renderQueries();
+                update();
+            });
+
+            historyList.addEventListener('click', function (event) {
+                var row = event.target.closest('.history-item');
+                if (!row) {
+                    return;
+                }
+
+                var id = row.dataset.id;
+                if (event.target.classList.contains('history-delete')) {
+                    histories = histories.filter(function (item) {
+                        return item.id !== id;
+                    });
+                    if (activeHistoryId === id) {
+                        activeHistoryId = '';
+                    }
+                    persistHistory();
+                    renderHistory();
+                    return;
+                }
+
+                if (event.target.closest('.history-main')) {
+                    var item = histories.find(function (history) {
+                        return history.id === id;
+                    });
+                    if (item) {
+                        activeHistoryId = item.id;
+                        jsonInput.value = item.json;
+                        queries = normalizeQueries(item.queries);
+                        if (!queries.length) {
+                            queries = [createQuery('str', '')];
+                        }
+                        resetNextIdFromQueries(queries);
+                        persistCurrentJson();
+                        writeStorage(storageKeys.queries, queries);
+                        renderHistory();
+                        renderQueries();
+                        update();
+                    }
+                }
+            });
+
+            jsonInput.value = readStorage(storageKeys.json, '');
+            applyTheme(readStorage(storageKeys.theme, 'light'));
+            histories = readStorage(storageKeys.history, []);
+            var draftQueries = normalizeQueries(readStorage(storageKeys.queries, []));
+            if (!Array.isArray(histories)) {
+                histories = [];
+            }
+            histories = histories.map(function (item) {
+                return {
+                    id: item.id,
+                    title: item.title || getHistoryTitle(item.json || ''),
+                    json: item.json || '',
+                    queries: normalizeQueries(item.queries),
+                    updatedAt: item.updatedAt || Date.now()
+                };
+            });
+
+            var currentHistory = histories.find(function (item) {
+                return item.json === jsonInput.value;
+            });
+            activeHistoryId = currentHistory ? currentHistory.id : '';
+            queries = currentHistory ? normalizeQueries(currentHistory.queries) : draftQueries;
+            if (currentHistory && !queries.length) {
+                queries = draftQueries;
+            }
+            if (!queries.length) {
+                queries = [createQuery('str', '')];
+            }
+            resetNextIdFromQueries(queries);
+            renderHistory();
+            renderQueries();
+            update();
+        })();
+    </script>
+</body>
+</html>
