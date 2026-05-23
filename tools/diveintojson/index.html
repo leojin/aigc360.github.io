@@ -273,6 +273,13 @@
             box-shadow: 0 24px 80px rgba(15, 23, 42, 0.28);
         }
 
+        .json-view-dialog {
+            width: min(1120px, 100%);
+            height: min(820px, calc(100vh - 48px));
+            display: flex;
+            flex-direction: column;
+        }
+
         .help-head {
             display: flex;
             align-items: center;
@@ -291,6 +298,66 @@
             background: var(--soft);
             cursor: pointer;
             font-size: 20px;
+        }
+
+        .json-view-body {
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+            padding: 18px;
+            background: var(--field);
+        }
+
+        .json-highlight {
+            margin: 0;
+            color: var(--value-text);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 13px;
+            line-height: 1.65;
+            white-space: pre;
+            tab-size: 2;
+        }
+
+        .json-key {
+            color: #8250df;
+            font-weight: 700;
+        }
+
+        .json-string {
+            color: #1a7f37;
+        }
+
+        .json-number {
+            color: #0969da;
+        }
+
+        .json-boolean {
+            color: #bf3989;
+        }
+
+        .json-null {
+            color: #6e7781;
+            font-weight: 700;
+        }
+
+        body.dark .json-key {
+            color: #c4b5fd;
+        }
+
+        body.dark .json-string {
+            color: #86efac;
+        }
+
+        body.dark .json-number {
+            color: #93c5fd;
+        }
+
+        body.dark .json-boolean {
+            color: #f0abfc;
+        }
+
+        body.dark .json-null {
+            color: #cbd5e1;
         }
 
         .help-tabs {
@@ -425,41 +492,56 @@
         }
 
         .path-mode {
-            display: inline-grid;
-            grid-template-columns: 1fr 1fr;
-            overflow: hidden;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             border: 1px solid var(--line);
             border-radius: 8px;
+            padding: 0 10px;
             background: var(--soft);
         }
 
-        .path-mode button {
-            min-width: 82px;
+        .path-mode::after {
+            content: "▾";
+            color: var(--muted);
+            font-size: 12px;
+            pointer-events: none;
+        }
+
+        .path-mode-label {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 750;
+            white-space: nowrap;
+        }
+
+        .path-mode select {
+            min-width: 118px;
             height: 32px;
             border: 0;
-            padding: 0 10px;
-            color: var(--muted);
+            padding: 0 18px 0 0;
+            color: var(--text);
             background: transparent;
             cursor: pointer;
             font-size: 13px;
             font-weight: 650;
-        }
-
-        .path-mode button.active {
-            color: #fff;
-            background: var(--primary);
+            outline: none;
+            appearance: none;
         }
 
         .editor-wrap {
             display: flex;
-            flex: 1;
+            flex: 0 1 58%;
             min-height: 0;
+            overflow: hidden;
             padding: 14px;
         }
 
         #jsonInput {
             width: 100%;
-            min-height: 360px;
+            height: 100%;
+            min-height: 0;
             resize: none;
             border: 1px solid var(--line);
             border-radius: 8px;
@@ -481,6 +563,11 @@
         }
 
         .query-area {
+            display: flex;
+            flex: 0 0 auto;
+            flex-direction: column;
+            max-height: 42%;
+            min-height: 0;
             border-top: 1px solid var(--line);
             padding: 14px;
         }
@@ -623,7 +710,8 @@
         .query-list {
             display: grid;
             gap: 10px;
-            max-height: 260px;
+            max-height: none;
+            min-height: 0;
             overflow: auto;
             padding-right: 2px;
         }
@@ -884,14 +972,18 @@
                 min-height: auto;
             }
 
+            .query-area {
+                max-height: none;
+            }
+
             .history-list {
                 max-height: 220px;
                 flex: none;
             }
 
             #jsonInput {
-                height: 320px;
-                min-height: 320px;
+                height: 240px;
+                min-height: 240px;
             }
 
             .query-list {
@@ -958,7 +1050,10 @@
             <section class="panel left-panel" aria-label="JSON input and search queries">
                 <div class="panel-head">
                     <h2>Input JSON</h2>
-                    <button id="formatJson" class="add-button" type="button">Format</button>
+                    <div class="head-actions">
+                        <button id="viewJson" class="add-button" type="button">View</button>
+                        <button id="formatJson" class="add-button" type="button">Format</button>
+                    </div>
                 </div>
                 <div class="editor-wrap">
                     <textarea id="jsonInput" spellcheck="false" placeholder="Paste long, complex JSON here"></textarea>
@@ -991,8 +1086,13 @@
             <div class="panel-head">
                 <h2>Results</h2>
                 <div class="path-mode" aria-label="Result path format">
-                    <button id="pathModePath" class="active" type="button">Path</button>
-                    <button id="pathModeHive" type="button">Hive SQL</button>
+                    <span class="path-mode-label">Mode</span>
+                    <select id="pathModeSelect" aria-label="Result path format">
+                        <option value="path">Path</option>
+                        <option value="js">JS</option>
+                        <option value="python">Python</option>
+                        <option value="hive">Hive SQL</option>
+                    </select>
                 </div>
                 <div id="parseStatus" class="status">Waiting for JSON</div>
                 <div id="resultSummary" class="status">0 matches</div>
@@ -1027,8 +1127,8 @@
                         <li>Value search checks values by type: str, number, or bool. Example: Value / str / alice finds string values containing alice.</li>
                         <li>Key search checks object keys. Example: Key / str / user finds userId, userName, and nested keys containing user.</li>
                         <li>Number search is substring-based after converting numbers to text. Example: Value / number / 42 matches 42 and 42.5.</li>
-                        <li>JSON strings are parsed deeply when possible. A path like $.payload.parse().id means payload was a string containing JSON.</li>
-                        <li>Switch Results between original Path and Hive SQL. Hive output uses data, for example get_json_object(data, '$.user.name').</li>
+                        <li>JSON strings are parsed deeply when possible. A path like JSON.parse($.payload).id means payload was a string containing JSON.</li>
+                        <li>Switch Results between JS, Python, and Hive SQL. Hive output uses data, for example get_json_object(data, '$.user.name').</li>
                         <li>Use New, Save, and Save As to manage local workspaces. Every workspace keeps its own searches.</li>
                     </ul>
                 </div>
@@ -1040,8 +1140,8 @@
                         <li>Value 查找会按类型匹配值：str、number、bool。例如 Value / str / alice 会查找包含 alice 的字符串值。</li>
                         <li>Key 查找会匹配对象字段名。例如 Key / str / user 会找到 userId、userName 以及嵌套 key。</li>
                         <li>Number 查找会先把数字转成文本再做包含匹配。例如 Value / number / 42 可以匹配 42 和 42.5。</li>
-                        <li>如果字符串可以解析为 JSON，会继续深度查找。路径 $.payload.parse().id 表示 payload 是一段 JSON 字符串。</li>
-                        <li>Results 支持 Path 和 Hive SQL 两种显示。Hive SQL 使用 data 字段，例如 get_json_object(data, '$.user.name')。</li>
+                        <li>如果字符串可以解析为 JSON，会继续深度查找。路径 JSON.parse($.payload).id 表示 payload 是一段 JSON 字符串。</li>
+                        <li>Results 支持 JS、Python 和 Hive SQL 三种显示。Hive SQL 使用 data 字段，例如 get_json_object(data, '$.user.name')。</li>
                         <li>使用 New、Save、Save As 管理本地工作区。每个工作区都有自己独立的查找项。</li>
                     </ul>
                 </div>
@@ -1053,8 +1153,8 @@
                         <li>Value 検索は str、number、bool の型で値を検索します。例: Value / str / alice は alice を含む文字列値を探します。</li>
                         <li>Key 検索はオブジェクトのキー名を検索します。例: Key / str / user は userId、userName、ネストした key を探します。</li>
                         <li>Number 検索は数値を文字列化して部分一致します。例: Value / number / 42 は 42 と 42.5 に一致します。</li>
-                        <li>JSON として解析できる文字列はさらに深く検索されます。$.payload.parse().id は payload が JSON 文字列だったことを示します。</li>
-                        <li>Results は Path と Hive SQL を切り替えられます。Hive SQL は data を使います。例: get_json_object(data, '$.user.name')</li>
+                        <li>JSON として解析できる文字列はさらに深く検索されます。JSON.parse($.payload).id は payload が JSON 文字列だったことを示します。</li>
+                        <li>Results は JS、Python、Hive SQL を切り替えられます。Hive SQL は data を使います。例: get_json_object(data, '$.user.name')</li>
                         <li>New、Save、Save As でローカルワークスペースを管理できます。各ワークスペースは独自の検索条件を持ちます。</li>
                     </ul>
                 </div>
@@ -1066,8 +1166,8 @@
                         <li>Value-Suche pruft Werte nach Typ: str, number oder bool. Beispiel: Value / str / alice findet String-Werte mit alice.</li>
                         <li>Key-Suche pruft Objektschlussel. Beispiel: Key / str / user findet userId, userName und verschachtelte Keys mit user.</li>
                         <li>Number-Suche wandelt Zahlen in Text um und sucht per Teilstring. Beispiel: Value / number / 42 findet 42 und 42.5.</li>
-                        <li>JSON-Strings werden tiefer geparst, wenn moglich. $.payload.parse().id bedeutet, dass payload ein JSON-String war.</li>
-                        <li>Results kann Path oder Hive SQL anzeigen. Hive SQL nutzt data, zum Beispiel get_json_object(data, '$.user.name').</li>
+                        <li>JSON-Strings werden tiefer geparst, wenn moglich. JSON.parse($.payload).id bedeutet, dass payload ein JSON-String war.</li>
+                        <li>Results kann JS, Python oder Hive SQL anzeigen. Hive SQL nutzt data, zum Beispiel get_json_object(data, '$.user.name').</li>
                         <li>Mit New, Save und Save As verwaltest du lokale Workspaces. Jeder Workspace hat eigene Suchabfragen.</li>
                     </ul>
                 </div>
@@ -1085,6 +1185,18 @@
         </div>
     </div>
 
+    <div id="jsonViewModal" class="help-modal" role="dialog" aria-modal="true" aria-labelledby="jsonViewTitle">
+        <div class="help-dialog json-view-dialog">
+            <div class="help-head">
+                <h2 id="jsonViewTitle">JSON Viewer</h2>
+                <button id="jsonViewClose" class="help-close" type="button" aria-label="Close JSON viewer">×</button>
+            </div>
+            <div class="json-view-body">
+                <pre id="jsonViewContent" class="json-highlight"></pre>
+            </div>
+        </div>
+    </div>
+
     <div id="copyToast" class="copy-toast" role="status" aria-live="polite">Copied</div>
 
     <script>
@@ -1093,6 +1205,7 @@
             var parseStatus = document.getElementById('parseStatus');
             var queryList = document.getElementById('queryList');
             var addQueryButton = document.getElementById('addQuery');
+            var viewJsonButton = document.getElementById('viewJson');
             var formatJsonButton = document.getElementById('formatJson');
             var saveHistoryButton = document.getElementById('saveHistory');
             var saveAsHistoryButton = document.getElementById('saveAsHistory');
@@ -1100,11 +1213,13 @@
             var historyList = document.getElementById('historyList');
             var results = document.getElementById('results');
             var resultSummary = document.getElementById('resultSummary');
-            var pathModePathButton = document.getElementById('pathModePath');
-            var pathModeHiveButton = document.getElementById('pathModeHive');
+            var pathModeSelect = document.getElementById('pathModeSelect');
             var helpOpenButton = document.getElementById('helpOpen');
             var helpCloseButton = document.getElementById('helpClose');
             var helpModal = document.getElementById('helpModal');
+            var jsonViewModal = document.getElementById('jsonViewModal');
+            var jsonViewCloseButton = document.getElementById('jsonViewClose');
+            var jsonViewContent = document.getElementById('jsonViewContent');
             var themeToggleButton = document.getElementById('themeToggle');
             var themeIcon = document.getElementById('themeIcon');
             var copyToast = document.getElementById('copyToast');
@@ -1448,9 +1563,6 @@
             }
 
             function formatPathPart(key) {
-                if (/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key)) {
-                    return '.' + key;
-                }
                 return '[' + JSON.stringify(key) + ']';
             }
 
@@ -1476,6 +1588,24 @@
                     var jsonPath = normalizeHiveJsonPath(pathPart);
                     return "get_json_object(" + expr + ", '" + escapeSqlString(jsonPath) + "')";
                 }, 'data');
+            }
+
+            function pathToJsonParseExpression(path) {
+                var parts = path.replace(/^\$/, 'data').split('.parse()');
+                return parts.slice(1).reduce(function (expr, pathPart) {
+                    return 'JSON.parse(' + expr + ')' + pathPart;
+                }, parts[0]);
+            }
+
+            function pathToPythonExpression(path) {
+                var parts = path.replace(/^\$/, 'data').split('.parse()');
+                return parts.slice(1).reduce(function (expr, pathPart) {
+                    return 'json.loads(' + expr + ')' + pathPart;
+                }, parts[0]);
+            }
+
+            function pathToReadablePath(path) {
+                return path;
             }
 
             function tryParseJsonString(value) {
@@ -1542,6 +1672,9 @@
             }
 
             function displayValue(value) {
+                if (typeof value === 'string') {
+                    return value;
+                }
                 return JSON.stringify(value, null, 2);
             }
 
@@ -1582,13 +1715,21 @@
             }
 
             function displayPath(path) {
-                return pathMode === 'hive' ? pathToHiveExpression(path) : path;
+                if (pathMode === 'path') {
+                    return pathToReadablePath(path);
+                }
+                if (pathMode === 'hive') {
+                    return pathToHiveExpression(path);
+                }
+                if (pathMode === 'python') {
+                    return pathToPythonExpression(path);
+                }
+                return pathToJsonParseExpression(path);
             }
 
             function setPathMode(mode) {
                 pathMode = mode;
-                pathModePathButton.classList.toggle('active', mode === 'path');
-                pathModeHiveButton.classList.toggle('active', mode === 'hive');
+                pathModeSelect.value = mode;
                 renderResults(currentData);
             }
 
@@ -1610,6 +1751,59 @@
 
             function closeHelp() {
                 helpModal.classList.remove('open');
+            }
+
+            function escapeHtml(value) {
+                return value
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+            }
+
+            function highlightJson(json) {
+                return escapeHtml(json).replace(/("(?:\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"(?=\s*:)|"(?:\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"|-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?|\btrue\b|\bfalse\b|\bnull\b)/g, function (token) {
+                    var className = 'json-number';
+                    if (/^"/.test(token)) {
+                        var offset = arguments[arguments.length - 2];
+                        var source = arguments[arguments.length - 1];
+                        className = source.slice(offset + token.length).match(/^\s*:/) ? 'json-key' : 'json-string';
+                    } else if (token === 'true' || token === 'false') {
+                        className = 'json-boolean';
+                    } else if (token === 'null') {
+                        className = 'json-null';
+                    }
+                    return '<span class="' + className + '">' + token + '</span>';
+                });
+            }
+
+            function openJsonViewer() {
+                var text = jsonInput.value.trim();
+                if (!text) {
+                    jsonViewContent.textContent = '';
+                    jsonViewModal.classList.add('open');
+                    return;
+                }
+
+                var formatted = '';
+                try {
+                    formatted = JSON.stringify(JSON.parse(text), null, 2);
+                } catch (error) {
+                    update();
+                    showCopyToast('Invalid JSON');
+                    return;
+                }
+
+                try {
+                    jsonViewContent.innerHTML = highlightJson(formatted);
+                } catch (error) {
+                    jsonViewContent.textContent = formatted;
+                    showCopyToast('Opened without highlight');
+                }
+                jsonViewModal.classList.add('open');
+            }
+
+            function closeJsonViewer() {
+                jsonViewModal.classList.remove('open');
             }
 
             function showCopyToast(message) {
@@ -1849,6 +2043,7 @@
             });
 
             jsonInput.addEventListener('input', update);
+            viewJsonButton.addEventListener('click', openJsonViewer);
             results.addEventListener('click', function (event) {
                 var target = event.target.closest('.copyable');
                 if (!target || !results.contains(target)) {
@@ -1862,6 +2057,12 @@
             formatJsonButton.addEventListener('click', formatJsonInput);
             helpOpenButton.addEventListener('click', openHelp);
             helpCloseButton.addEventListener('click', closeHelp);
+            jsonViewCloseButton.addEventListener('click', closeJsonViewer);
+            jsonViewModal.addEventListener('click', function (event) {
+                if (event.target === jsonViewModal) {
+                    closeJsonViewer();
+                }
+            });
             helpModal.addEventListener('click', function (event) {
                 if (event.target === helpModal) {
                     closeHelp();
@@ -1873,13 +2074,11 @@
             document.addEventListener('keydown', function (event) {
                 if (event.key === 'Escape') {
                     closeHelp();
+                    closeJsonViewer();
                 }
             });
-            pathModePathButton.addEventListener('click', function () {
-                setPathMode('path');
-            });
-            pathModeHiveButton.addEventListener('click', function () {
-                setPathMode('hive');
+            pathModeSelect.addEventListener('change', function () {
+                setPathMode(pathModeSelect.value);
             });
             saveHistoryButton.addEventListener('click', function () {
                 saveCurrentHistory(false);
