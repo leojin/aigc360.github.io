@@ -839,27 +839,49 @@
         }
 
         @media (max-width: 920px) {
+            html,
             body {
-                padding: 12px;
+                height: auto;
+                min-height: 100%;
+                overflow: auto;
+            }
+
+            body {
+                padding: 12px 12px max(12px, env(safe-area-inset-bottom));
             }
 
             .app {
                 grid-template-columns: 1fr;
-                height: calc(100vh - 24px);
-                min-height: 0;
-                overflow: auto;
+                height: auto;
+                min-height: 100vh;
+                overflow: visible;
             }
 
             .left-stack {
                 width: 100%;
                 height: auto;
                 grid-template-columns: 1fr;
+                align-content: start;
             }
 
             .left-panel,
             .history-panel {
                 grid-column: auto;
                 grid-row: auto;
+                overflow: visible;
+            }
+
+            .history-panel {
+                order: -1;
+            }
+
+            .left-panel {
+                order: 0;
+            }
+
+            .editor-wrap {
+                flex: none;
+                min-height: auto;
             }
 
             .history-list {
@@ -868,7 +890,22 @@
             }
 
             #jsonInput {
+                height: 320px;
                 min-height: 320px;
+            }
+
+            .query-list {
+                max-height: none;
+                overflow: visible;
+            }
+
+            .results-panel,
+            .results {
+                overflow: visible;
+            }
+
+            .results {
+                flex: none;
             }
 
             .match-row {
@@ -889,6 +926,12 @@
                 flex-basis: auto;
             }
 
+            .left-panel .panel-head,
+            .query-title {
+                align-items: center;
+                flex-direction: row;
+            }
+
             .query-row {
                 grid-template-columns: 12px 1fr 1fr;
             }
@@ -900,6 +943,15 @@
         }
     </style>
 </head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-N68BM38YB4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-N68BM38YB4');
+</script>
 <body>
     <main class="app">
         <div class="left-stack">
