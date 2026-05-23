@@ -318,6 +318,47 @@
             tab-size: 2;
         }
 
+        .image-preview-body {
+            display: grid;
+            place-items: center;
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+            padding: 18px;
+            background:
+                linear-gradient(45deg, rgba(148, 163, 184, 0.12) 25%, transparent 25%),
+                linear-gradient(-45deg, rgba(148, 163, 184, 0.12) 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, rgba(148, 163, 184, 0.12) 75%),
+                linear-gradient(-45deg, transparent 75%, rgba(148, 163, 184, 0.12) 75%),
+                var(--field);
+            background-size: 24px 24px;
+            background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+        }
+
+        .image-preview-body img {
+            display: block;
+            max-width: 100%;
+            max-height: calc(100vh - 160px);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .preview-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 8px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 5px 9px;
+            color: var(--primary);
+            background: var(--soft);
+            cursor: pointer;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-size: 12px;
+            font-weight: 750;
+        }
+
         .json-key {
             color: #8250df;
             font-weight: 700;
@@ -531,21 +572,65 @@
         }
 
         .editor-wrap {
-            display: flex;
-            flex: 0 1 58%;
-            min-height: 0;
-            overflow: hidden;
+            display: grid;
+            grid-auto-rows: max-content;
+            align-content: start;
+            gap: 12px;
+            flex: 1 1 0;
+            min-height: 180px;
+            overflow: auto;
             padding: 14px;
         }
 
-        #jsonInput {
+        .json-doc {
+            display: grid;
+            gap: 8px;
+            min-height: max-content;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 10px;
+            background: var(--card);
+            overflow: hidden;
+            contain: layout paint;
+        }
+
+        .json-doc-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .json-doc-title {
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 750;
+        }
+
+        .json-doc-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .json-doc-actions .add-button,
+        .json-doc-actions .delete-button {
+            height: 34px;
+            padding: 6px 10px;
+        }
+
+        .json-doc textarea {
+            display: block;
             width: 100%;
-            height: 100%;
-            min-height: 0;
+            height: 132px;
+            min-height: 132px;
+            max-height: 132px;
             resize: none;
             border: 1px solid var(--line);
             border-radius: 8px;
             padding: 14px;
+            overflow: auto;
             outline: none;
             color: var(--value-text);
             background: var(--field);
@@ -555,7 +640,7 @@
             tab-size: 2;
         }
 
-        #jsonInput:focus,
+        .json-doc textarea:focus,
         .query-type:focus,
         .query-value:focus {
             border-color: var(--primary);
@@ -566,7 +651,7 @@
             display: flex;
             flex: 0 0 auto;
             flex-direction: column;
-            max-height: 42%;
+            max-height: 40%;
             min-height: 0;
             border-top: 1px solid var(--line);
             padding: 14px;
@@ -710,6 +795,7 @@
         .query-list {
             display: grid;
             gap: 10px;
+            flex: 1 1 auto;
             max-height: none;
             min-height: 0;
             overflow: auto;
@@ -834,7 +920,7 @@
 
         .match-row {
             display: grid;
-            grid-template-columns: minmax(180px, 36%) minmax(220px, 1fr);
+            grid-template-columns: 74px minmax(180px, 34%) minmax(220px, 1fr);
             gap: 10px;
             align-items: start;
             padding: 10px;
@@ -970,6 +1056,7 @@
             .editor-wrap {
                 flex: none;
                 min-height: auto;
+                overflow: visible;
             }
 
             .query-area {
@@ -981,9 +1068,10 @@
                 flex: none;
             }
 
-            #jsonInput {
-                height: 240px;
-                min-height: 240px;
+            .json-doc textarea {
+                height: 180px;
+                min-height: 180px;
+                max-height: 180px;
             }
 
             .query-list {
@@ -1051,13 +1139,10 @@
                 <div class="panel-head">
                     <h2>Input JSON</h2>
                     <div class="head-actions">
-                        <button id="viewJson" class="add-button" type="button">View</button>
-                        <button id="formatJson" class="add-button" type="button">Format</button>
+                        <button id="addJsonDoc" class="add-button" type="button">Add JSON</button>
                     </div>
                 </div>
-                <div class="editor-wrap">
-                    <textarea id="jsonInput" spellcheck="false" placeholder="Paste long, complex JSON here"></textarea>
-                </div>
+                <div id="jsonList" class="editor-wrap" aria-live="polite"></div>
                 <div class="query-area">
                     <div class="query-title">
                         <h2>Search</h2>
@@ -1123,12 +1208,16 @@
                     <p>Paste JSON, add search queries, then inspect every matching path and value. The page works fully in your browser and stores workspaces in localStorage.</p>
                     <ul>
                         <li>Use Format to pretty-print valid JSON with two-space indentation.</li>
+                        <li>Use View to open a larger syntax-highlighted JSON viewer.</li>
+                        <li>Use Add JSON to compare multiple JSON inputs in the same workspace.</li>
                         <li>Add multiple searches. Each search has a target, a type, and a term.</li>
                         <li>Value search checks values by type: str, number, or bool. Example: Value / str / alice finds string values containing alice.</li>
                         <li>Key search checks object keys. Example: Key / str / user finds userId, userName, and nested keys containing user.</li>
                         <li>Number search is substring-based after converting numbers to text. Example: Value / number / 42 matches 42 and 42.5.</li>
-                        <li>JSON strings are parsed deeply when possible. A path like JSON.parse($.payload).id means payload was a string containing JSON.</li>
-                        <li>Switch Results between JS, Python, and Hive SQL. Hive output uses data, for example get_json_object(data, '$.user.name').</li>
+                        <li>JSON strings are parsed deeply when possible. A JS path like JSON.parse(data["payload"])["id"] means payload was a string containing JSON.</li>
+                        <li>Switch Results between Path, JS, Python, and Hive SQL. Hive output uses data, for example get_json_object(data, '$.user.name').</li>
+                        <li>Click any displayed path/expression or value to copy it.</li>
+                        <li>Image URLs show a Preview image action. Other http/https URLs show Open link.</li>
                         <li>Use New, Save, and Save As to manage local workspaces. Every workspace keeps its own searches.</li>
                     </ul>
                 </div>
@@ -1136,12 +1225,16 @@
                     <p>粘贴 JSON，添加查找条件，然后查看所有匹配的路径和值。页面完全在浏览器中运行，并使用 localStorage 保存工作区。</p>
                     <ul>
                         <li>点击 Format 可以把合法 JSON 格式化为两个空格缩进。</li>
+                        <li>点击 View 可以打开更大的语法高亮 JSON 阅读器。</li>
+                        <li>点击 Add JSON 可以在同一个工作区里对比多个 JSON 输入。</li>
                         <li>可以添加多个查找项。每个查找项包含查找对象、类型和查找值。</li>
                         <li>Value 查找会按类型匹配值：str、number、bool。例如 Value / str / alice 会查找包含 alice 的字符串值。</li>
                         <li>Key 查找会匹配对象字段名。例如 Key / str / user 会找到 userId、userName 以及嵌套 key。</li>
                         <li>Number 查找会先把数字转成文本再做包含匹配。例如 Value / number / 42 可以匹配 42 和 42.5。</li>
-                        <li>如果字符串可以解析为 JSON，会继续深度查找。路径 JSON.parse($.payload).id 表示 payload 是一段 JSON 字符串。</li>
-                        <li>Results 支持 JS、Python 和 Hive SQL 三种显示。Hive SQL 使用 data 字段，例如 get_json_object(data, '$.user.name')。</li>
+                        <li>如果字符串可以解析为 JSON，会继续深度查找。JS 路径 JSON.parse(data["payload"])["id"] 表示 payload 是一段 JSON 字符串。</li>
+                        <li>Results 支持 Path、JS、Python 和 Hive SQL 四种显示。Hive SQL 使用 data 字段，例如 get_json_object(data, '$.user.name')。</li>
+                        <li>点击任意路径/表达式或值可以复制。</li>
+                        <li>图片 URL 会显示 Preview image；其它 http/https URL 会显示 Open link。</li>
                         <li>使用 New、Save、Save As 管理本地工作区。每个工作区都有自己独立的查找项。</li>
                     </ul>
                 </div>
@@ -1149,12 +1242,16 @@
                     <p>JSON を貼り付け、検索条件を追加すると、一致したパスと値を確認できます。データはブラウザ内で処理され、ワークスペースは localStorage に保存されます。</p>
                     <ul>
                         <li>Format で有効な JSON を 2 スペースのインデントに整形できます。</li>
+                        <li>View で大きなシンタックスハイライト付き JSON ビューアを開けます。</li>
+                        <li>Add JSON で同じワークスペース内に複数の JSON 入力を追加して比較できます。</li>
                         <li>複数の検索条件を追加できます。各条件には検索対象、型、検索語があります。</li>
                         <li>Value 検索は str、number、bool の型で値を検索します。例: Value / str / alice は alice を含む文字列値を探します。</li>
                         <li>Key 検索はオブジェクトのキー名を検索します。例: Key / str / user は userId、userName、ネストした key を探します。</li>
                         <li>Number 検索は数値を文字列化して部分一致します。例: Value / number / 42 は 42 と 42.5 に一致します。</li>
-                        <li>JSON として解析できる文字列はさらに深く検索されます。JSON.parse($.payload).id は payload が JSON 文字列だったことを示します。</li>
-                        <li>Results は JS、Python、Hive SQL を切り替えられます。Hive SQL は data を使います。例: get_json_object(data, '$.user.name')</li>
+                        <li>JSON として解析できる文字列はさらに深く検索されます。JS パス JSON.parse(data["payload"])["id"] は payload が JSON 文字列だったことを示します。</li>
+                        <li>Results は Path、JS、Python、Hive SQL を切り替えられます。Hive SQL は data を使います。例: get_json_object(data, '$.user.name')</li>
+                        <li>表示されたパス/式または値をクリックするとコピーできます。</li>
+                        <li>画像 URL には Preview image、その他の http/https URL には Open link が表示されます。</li>
                         <li>New、Save、Save As でローカルワークスペースを管理できます。各ワークスペースは独自の検索条件を持ちます。</li>
                     </ul>
                 </div>
@@ -1162,12 +1259,16 @@
                     <p>Fuge JSON ein, erstelle Suchabfragen und prufe alle passenden Pfade und Werte. Alles lauft im Browser, Workspaces werden in localStorage gespeichert.</p>
                     <ul>
                         <li>Mit Format wird gultiges JSON mit zwei Leerzeichen eingeruckt.</li>
+                        <li>Mit View offnest du einen grosseren JSON-Viewer mit Syntax-Highlighting.</li>
+                        <li>Mit Add JSON kannst du mehrere JSON-Eingaben im selben Workspace vergleichen.</li>
                         <li>Du kannst mehrere Suchen anlegen. Jede Suche hat Ziel, Typ und Suchwert.</li>
                         <li>Value-Suche pruft Werte nach Typ: str, number oder bool. Beispiel: Value / str / alice findet String-Werte mit alice.</li>
                         <li>Key-Suche pruft Objektschlussel. Beispiel: Key / str / user findet userId, userName und verschachtelte Keys mit user.</li>
                         <li>Number-Suche wandelt Zahlen in Text um und sucht per Teilstring. Beispiel: Value / number / 42 findet 42 und 42.5.</li>
-                        <li>JSON-Strings werden tiefer geparst, wenn moglich. JSON.parse($.payload).id bedeutet, dass payload ein JSON-String war.</li>
-                        <li>Results kann JS, Python oder Hive SQL anzeigen. Hive SQL nutzt data, zum Beispiel get_json_object(data, '$.user.name').</li>
+                        <li>JSON-Strings werden tiefer geparst, wenn moglich. Ein JS-Pfad wie JSON.parse(data["payload"])["id"] bedeutet, dass payload ein JSON-String war.</li>
+                        <li>Results kann Path, JS, Python oder Hive SQL anzeigen. Hive SQL nutzt data, zum Beispiel get_json_object(data, '$.user.name').</li>
+                        <li>Klicke auf einen Pfad/Ausdruck oder Wert, um ihn zu kopieren.</li>
+                        <li>Bild-URLs zeigen Preview image. Andere http/https URLs zeigen Open link.</li>
                         <li>Mit New, Save und Save As verwaltest du lokale Workspaces. Jeder Workspace hat eigene Suchabfragen.</li>
                     </ul>
                 </div>
@@ -1197,16 +1298,27 @@
         </div>
     </div>
 
+    <div id="imagePreviewModal" class="help-modal" role="dialog" aria-modal="true" aria-labelledby="imagePreviewTitle">
+        <div class="help-dialog json-view-dialog">
+            <div class="help-head">
+                <h2 id="imagePreviewTitle">Image Preview</h2>
+                <button id="imagePreviewClose" class="help-close" type="button" aria-label="Close image preview">×</button>
+            </div>
+            <div class="image-preview-body">
+                <img id="imagePreviewImg" alt="Preview">
+            </div>
+        </div>
+    </div>
+
     <div id="copyToast" class="copy-toast" role="status" aria-live="polite">Copied</div>
 
     <script>
         (function () {
-            var jsonInput = document.getElementById('jsonInput');
+            var jsonList = document.getElementById('jsonList');
             var parseStatus = document.getElementById('parseStatus');
             var queryList = document.getElementById('queryList');
             var addQueryButton = document.getElementById('addQuery');
-            var viewJsonButton = document.getElementById('viewJson');
-            var formatJsonButton = document.getElementById('formatJson');
+            var addJsonDocButton = document.getElementById('addJsonDoc');
             var saveHistoryButton = document.getElementById('saveHistory');
             var saveAsHistoryButton = document.getElementById('saveAsHistory');
             var newHistoryButton = document.getElementById('newHistory');
@@ -1220,6 +1332,9 @@
             var jsonViewModal = document.getElementById('jsonViewModal');
             var jsonViewCloseButton = document.getElementById('jsonViewClose');
             var jsonViewContent = document.getElementById('jsonViewContent');
+            var imagePreviewModal = document.getElementById('imagePreviewModal');
+            var imagePreviewCloseButton = document.getElementById('imagePreviewClose');
+            var imagePreviewImg = document.getElementById('imagePreviewImg');
             var themeToggleButton = document.getElementById('themeToggle');
             var themeIcon = document.getElementById('themeIcon');
             var copyToast = document.getElementById('copyToast');
@@ -1227,16 +1342,19 @@
 
             var storageKeys = {
                 json: 'diveintojson.currentJson',
+                jsonDocs: 'diveintojson.currentJsonDocs',
                 queries: 'diveintojson.queries',
                 history: 'diveintojson.history',
                 theme: 'diveintojson.theme'
             };
+            var jsonDocs = [];
             var queries = [];
             var histories = [];
             var activeHistoryId = '';
-            var currentData = null;
+            var currentData = [];
             var pathMode = 'path';
             var nextId = 1;
+            var nextJsonDocId = 1;
             var palette = [
                 '#1f6feb', '#0969da', '#8250df', '#bf3989', '#d1242f',
                 '#b35900', '#1a7f37', '#0a7f73', '#0550ae', '#6639ba',
@@ -1312,6 +1430,121 @@
                 }, 0) + 1;
             }
 
+            function createJsonDoc(value) {
+                return {
+                    id: nextJsonDocId++,
+                    value: value || ''
+                };
+            }
+
+            function normalizeJsonDocs(list, fallbackText) {
+                if (!Array.isArray(list) || !list.length) {
+                    return [createJsonDoc(fallbackText || '')];
+                }
+                return list.map(function (doc) {
+                    return {
+                        id: Number(doc.id) || nextJsonDocId++,
+                        value: doc.value || doc.json || ''
+                    };
+                });
+            }
+
+            function cloneJsonDocs(list) {
+                return normalizeJsonDocs(list).map(function (doc) {
+                    return {
+                        id: doc.id,
+                        value: doc.value
+                    };
+                });
+            }
+
+            function jsonDocsSignature(list) {
+                var values = Array.isArray(list) && list.length ? list.map(function (doc) {
+                    return doc.value || doc.json || '';
+                }) : [''];
+                return JSON.stringify(values);
+            }
+
+            function jsonDocsSignatureFromItem(item) {
+                if (Array.isArray(item.jsonDocs) && item.jsonDocs.length) {
+                    return jsonDocsSignature(item.jsonDocs);
+                }
+                return JSON.stringify([item.json || '']);
+            }
+
+            function currentJsonDocsSignature() {
+                return JSON.stringify(jsonDocs.map(function (doc) {
+                    return doc.value || '';
+                }));
+            }
+
+            function resetNextJsonDocId(list) {
+                nextJsonDocId = list.reduce(function (max, doc) {
+                    return Math.max(max, Number(doc.id) || 0);
+                }, 0) + 1;
+            }
+
+            function getJsonDocById(id) {
+                return jsonDocs.find(function (doc) {
+                    return doc.id === id;
+                });
+            }
+
+            function getJsonDocLabel(doc, index) {
+                return 'JSON ' + (index + 1);
+            }
+
+            function renderJsonDocs() {
+                jsonList.innerHTML = '';
+                jsonDocs.forEach(function (doc, index) {
+                    var row = document.createElement('div');
+                    row.className = 'json-doc';
+                    row.dataset.id = String(doc.id);
+
+                    var head = document.createElement('div');
+                    head.className = 'json-doc-head';
+
+                    var title = document.createElement('div');
+                    title.className = 'json-doc-title';
+                    title.textContent = getJsonDocLabel(doc, index);
+
+                    var actions = document.createElement('div');
+                    actions.className = 'json-doc-actions';
+
+                    var viewButton = document.createElement('button');
+                    viewButton.className = 'add-button json-view-button';
+                    viewButton.type = 'button';
+                    viewButton.textContent = 'View';
+
+                    var formatButton = document.createElement('button');
+                    formatButton.className = 'add-button json-format-button';
+                    formatButton.type = 'button';
+                    formatButton.textContent = 'Format';
+
+                    var deleteButton = document.createElement('button');
+                    deleteButton.className = 'delete-button json-delete-button';
+                    deleteButton.type = 'button';
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.disabled = jsonDocs.length === 1;
+
+                    var textarea = document.createElement('textarea');
+                    textarea.className = 'json-doc-input';
+                    textarea.spellcheck = false;
+                    textarea.placeholder = 'Paste long, complex JSON here';
+                    textarea.value = doc.value;
+                    textarea.setAttribute('aria-label', getJsonDocLabel(doc, index));
+
+                    actions.appendChild(viewButton);
+                    actions.appendChild(formatButton);
+                    actions.appendChild(deleteButton);
+                    head.appendChild(title);
+                    head.appendChild(actions);
+                    row.appendChild(head);
+                    row.appendChild(textarea);
+                    jsonList.appendChild(row);
+                });
+            }
+
             function renderQueries() {
                 queryList.innerHTML = '';
                 queries.forEach(function (query) {
@@ -1377,6 +1610,15 @@
                 return trimmed.replace(/\s+/g, ' ').slice(0, 48);
             }
 
+            function getWorkspaceTitle(docs) {
+                var first = (docs || []).find(function (doc) {
+                    return doc.value && doc.value.trim();
+                });
+                var count = docs && docs.length ? docs.length : 1;
+                var base = first ? getHistoryTitle(first.value) : 'Empty JSON';
+                return count > 1 ? base + ' +' + (count - 1) : base;
+            }
+
             function renderHistory() {
                 historyList.innerHTML = '';
 
@@ -1430,7 +1672,8 @@
             }
 
             function persistCurrentJson() {
-                writeStorage(storageKeys.json, jsonInput.value);
+                writeStorage(storageKeys.jsonDocs, jsonDocs);
+                writeStorage(storageKeys.json, jsonDocs[0] ? jsonDocs[0].value : '');
             }
 
             function persistHistory() {
@@ -1446,16 +1689,16 @@
             function createHistoryItem(text, now) {
                 return {
                     id: String(now) + '-' + Math.random().toString(16).slice(2),
-                    title: getHistoryTitle(text),
-                    json: text,
+                    title: getWorkspaceTitle(jsonDocs),
+                    json: jsonDocs[0] ? jsonDocs[0].value : '',
+                    jsonDocs: cloneJsonDocs(jsonDocs),
                     queries: cloneQueries(queries),
                     updatedAt: now
                 };
             }
 
             function saveCurrentHistory(forceNew) {
-                var text = jsonInput.value;
-                if (!text.trim()) {
+                if (!jsonDocs.some(function (doc) { return doc.value.trim(); })) {
                     return;
                 }
 
@@ -1465,17 +1708,20 @@
                 });
 
                 if (!forceNew && activeIndex !== -1) {
-                    histories[activeIndex].title = getHistoryTitle(text);
-                    histories[activeIndex].json = text;
+                    histories[activeIndex].title = getWorkspaceTitle(jsonDocs);
+                    histories[activeIndex].json = jsonDocs[0] ? jsonDocs[0].value : '';
+                    histories[activeIndex].jsonDocs = cloneJsonDocs(jsonDocs);
                     histories[activeIndex].queries = cloneQueries(queries);
                     histories[activeIndex].updatedAt = now;
                     histories.unshift(histories.splice(activeIndex, 1)[0]);
                 } else if (!forceNew) {
                     var existingIndex = histories.findIndex(function (item) {
-                        return item.json === text;
+                        return jsonDocsSignatureFromItem(item) === currentJsonDocsSignature();
                     });
                     if (existingIndex !== -1) {
-                        histories[existingIndex].title = getHistoryTitle(text);
+                        histories[existingIndex].title = getWorkspaceTitle(jsonDocs);
+                        histories[existingIndex].json = jsonDocs[0] ? jsonDocs[0].value : '';
+                        histories[existingIndex].jsonDocs = cloneJsonDocs(jsonDocs);
                         histories[existingIndex].queries = cloneQueries(queries);
                         histories[existingIndex].updatedAt = now;
                         activeHistoryId = histories[existingIndex].id;
@@ -1678,6 +1924,31 @@
                 return JSON.stringify(value, null, 2);
             }
 
+            function isLikelyImageUrl(value) {
+                var trimmed = typeof value === 'string' ? value.trim() : '';
+                if (!isHttpUrl(trimmed)) {
+                    return false;
+                }
+                return /\.(png|jpe?g|gif|webp|bmp|svg|heic|avif)(?:[?#].*)?$/i.test(trimmed) ||
+                    /(?:image|img|photo|pic|thumb|preview)[^?#]*[?&][^#]*(?:format|type)=/i.test(trimmed) ||
+                    /(?:image_|_image|preview|thumb|watermark|image_raw|image_pre|image-qvalue)/i.test(trimmed);
+            }
+
+            function isHttpUrl(value) {
+                return typeof value === 'string' && /^https?:\/\//i.test(value.trim());
+            }
+
+            function openImagePreview(url) {
+                imagePreviewImg.src = url;
+                imagePreviewImg.alt = url;
+                imagePreviewModal.classList.add('open');
+            }
+
+            function closeImagePreview() {
+                imagePreviewModal.classList.remove('open');
+                imagePreviewImg.removeAttribute('src');
+            }
+
             function appendHighlightedText(node, text, needle, ignoreCase) {
                 var source = ignoreCase ? text.toLowerCase() : text;
                 var target = ignoreCase ? needle.toLowerCase() : needle;
@@ -1776,8 +2047,9 @@
                 });
             }
 
-            function openJsonViewer() {
-                var text = jsonInput.value.trim();
+            function openJsonViewer(docId) {
+                var doc = getJsonDocById(Number(docId));
+                var text = doc ? doc.value.trim() : '';
                 if (!text) {
                     jsonViewContent.textContent = '';
                     jsonViewModal.classList.add('open');
@@ -1841,24 +2113,26 @@
                 document.body.removeChild(textarea);
             }
 
-            function formatJsonInput() {
-                var text = jsonInput.value.trim();
+            function formatJsonInput(docId) {
+                var doc = getJsonDocById(Number(docId));
+                var text = doc ? doc.value.trim() : '';
                 if (!text) {
                     update();
                     return;
                 }
 
                 try {
-                    jsonInput.value = JSON.stringify(JSON.parse(text), null, 2);
+                    doc.value = JSON.stringify(JSON.parse(text), null, 2);
                 } catch (error) {
                     update();
                     return;
                 }
 
+                renderJsonDocs();
                 update();
             }
 
-            function renderResults(data) {
+            function renderResults(dataDocs) {
                 results.innerHTML = '';
                 var total = 0;
 
@@ -1875,8 +2149,15 @@
 
                     var target = parseTarget(query);
                     var matches = [];
-                    if (data !== null && target.ok) {
-                        walk(data, '$', query, target, matches);
+                    if (Array.isArray(dataDocs) && dataDocs.length && target.ok) {
+                        dataDocs.forEach(function (doc) {
+                            var docMatches = [];
+                            walk(doc.data, '$', query, target, docMatches);
+                            docMatches.forEach(function (match) {
+                                match.docLabel = doc.label;
+                                matches.push(match);
+                            });
+                        });
                     }
                     total += matches.length;
 
@@ -1939,7 +2220,29 @@
                                     query.type === 'bool'
                                 );
                             }
+                            if (isLikelyImageUrl(match.value)) {
+                                var previewButton = document.createElement('button');
+                                previewButton.className = 'preview-button';
+                                previewButton.type = 'button';
+                                previewButton.textContent = 'Preview image';
+                                previewButton.dataset.previewUrl = match.value.trim();
+                                value.appendChild(document.createElement('br'));
+                                value.appendChild(previewButton);
+                            } else if (isHttpUrl(match.value)) {
+                                var openButton = document.createElement('button');
+                                openButton.className = 'preview-button';
+                                openButton.type = 'button';
+                                openButton.textContent = 'Open link';
+                                openButton.dataset.openUrl = match.value.trim();
+                                value.appendChild(document.createElement('br'));
+                                value.appendChild(openButton);
+                            }
 
+                            var docBadge = document.createElement('div');
+                            docBadge.className = 'match-count';
+                            docBadge.textContent = match.docLabel || 'JSON';
+
+                            row.appendChild(docBadge);
                             row.appendChild(path);
                             row.appendChild(value);
                             matchList.appendChild(row);
@@ -1954,26 +2257,48 @@
             }
 
             function update() {
-                var text = jsonInput.value.trim();
                 persistCurrentJson();
-                if (!text) {
-                    currentData = null;
+                var parsedDocs = [];
+                var invalidLabels = [];
+
+                jsonDocs.forEach(function (doc, index) {
+                    var text = doc.value.trim();
+                    if (!text) {
+                        return;
+                    }
+                    try {
+                        parsedDocs.push({
+                            id: doc.id,
+                            label: getJsonDocLabel(doc, index),
+                            data: JSON.parse(text)
+                        });
+                    } catch (error) {
+                        invalidLabels.push(getJsonDocLabel(doc, index));
+                    }
+                });
+
+                currentData = parsedDocs;
+                if (!parsedDocs.length && !invalidLabels.length) {
                     parseStatus.className = 'status';
                     parseStatus.textContent = 'Waiting for JSON';
-                    renderResults(null);
+                    renderResults([]);
                     return;
                 }
 
-                try {
-                    var data = JSON.parse(text);
-                    currentData = data;
+                if (!invalidLabels.length) {
                     parseStatus.className = 'status success';
-                    parseStatus.textContent = 'JSON valid';
-                    renderResults(data);
-                } catch (error) {
-                    currentData = null;
+                    parseStatus.textContent = parsedDocs.length === 1 ? 'JSON valid' : parsedDocs.length + ' JSONs valid';
+                    renderResults(parsedDocs);
+                    return;
+                }
+
+                if (parsedDocs.length) {
                     parseStatus.className = 'status error';
-                    parseStatus.textContent = 'Invalid JSON';
+                    parseStatus.textContent = invalidLabels.join(', ') + ' invalid';
+                    renderResults(parsedDocs);
+                } else {
+                    parseStatus.className = 'status error';
+                    parseStatus.textContent = invalidLabels.join(', ') + ' invalid';
                     results.innerHTML = '<div class="empty">Fix the JSON before searching</div>';
                     resultSummary.textContent = '0 matches';
                 }
@@ -2042,9 +2367,62 @@
                 update();
             });
 
-            jsonInput.addEventListener('input', update);
-            viewJsonButton.addEventListener('click', openJsonViewer);
+            addJsonDocButton.addEventListener('click', function () {
+                jsonDocs.push(createJsonDoc());
+                resetNextJsonDocId(jsonDocs);
+                renderJsonDocs();
+                persistCurrentJson();
+                update();
+                var inputs = jsonList.querySelectorAll('.json-doc-input');
+                if (inputs.length) {
+                    inputs[inputs.length - 1].focus();
+                }
+            });
+            jsonList.addEventListener('input', function (event) {
+                if (!event.target.classList.contains('json-doc-input')) {
+                    return;
+                }
+                var row = event.target.closest('.json-doc');
+                var doc = getJsonDocById(Number(row.dataset.id));
+                if (!doc) {
+                    return;
+                }
+                doc.value = event.target.value;
+                update();
+            });
+            jsonList.addEventListener('click', function (event) {
+                var row = event.target.closest('.json-doc');
+                if (!row) {
+                    return;
+                }
+                var id = Number(row.dataset.id);
+                if (event.target.classList.contains('json-view-button')) {
+                    openJsonViewer(id);
+                    return;
+                }
+                if (event.target.classList.contains('json-format-button')) {
+                    formatJsonInput(id);
+                    return;
+                }
+                if (event.target.classList.contains('json-delete-button') && jsonDocs.length > 1) {
+                    jsonDocs = jsonDocs.filter(function (doc) {
+                        return doc.id !== id;
+                    });
+                    renderJsonDocs();
+                    update();
+                }
+            });
             results.addEventListener('click', function (event) {
+                var preview = event.target.closest('.preview-button');
+                if (preview && results.contains(preview)) {
+                    event.stopPropagation();
+                    if (preview.dataset.previewUrl) {
+                        openImagePreview(preview.dataset.previewUrl);
+                    } else if (preview.dataset.openUrl) {
+                        window.open(preview.dataset.openUrl, '_blank', 'noopener,noreferrer');
+                    }
+                    return;
+                }
                 var target = event.target.closest('.copyable');
                 if (!target || !results.contains(target)) {
                     return;
@@ -2054,13 +2432,18 @@
             themeToggleButton.addEventListener('click', function () {
                 applyTheme(document.body.classList.contains('dark') ? 'light' : 'dark');
             });
-            formatJsonButton.addEventListener('click', formatJsonInput);
             helpOpenButton.addEventListener('click', openHelp);
             helpCloseButton.addEventListener('click', closeHelp);
             jsonViewCloseButton.addEventListener('click', closeJsonViewer);
             jsonViewModal.addEventListener('click', function (event) {
                 if (event.target === jsonViewModal) {
                     closeJsonViewer();
+                }
+            });
+            imagePreviewCloseButton.addEventListener('click', closeImagePreview);
+            imagePreviewModal.addEventListener('click', function (event) {
+                if (event.target === imagePreviewModal) {
+                    closeImagePreview();
                 }
             });
             helpModal.addEventListener('click', function (event) {
@@ -2075,6 +2458,7 @@
                 if (event.key === 'Escape') {
                     closeHelp();
                     closeJsonViewer();
+                    closeImagePreview();
                 }
             });
             pathModeSelect.addEventListener('change', function () {
@@ -2088,11 +2472,12 @@
             });
             newHistoryButton.addEventListener('click', function () {
                 activeHistoryId = '';
-                jsonInput.value = '';
+                jsonDocs = [createJsonDoc()];
                 queries = [createQuery('str', '')];
                 writeStorage(storageKeys.queries, queries);
                 persistCurrentJson();
                 renderHistory();
+                renderJsonDocs();
                 renderQueries();
                 update();
             });
@@ -2122,7 +2507,8 @@
                     });
                     if (item) {
                         activeHistoryId = item.id;
-                        jsonInput.value = item.json;
+                        jsonDocs = normalizeJsonDocs(item.jsonDocs, item.json);
+                        resetNextJsonDocId(jsonDocs);
                         queries = normalizeQueries(item.queries);
                         if (!queries.length) {
                             queries = [createQuery('str', '')];
@@ -2131,31 +2517,35 @@
                         persistCurrentJson();
                         writeStorage(storageKeys.queries, queries);
                         renderHistory();
+                        renderJsonDocs();
                         renderQueries();
                         update();
                     }
                 }
             });
 
-            jsonInput.value = readStorage(storageKeys.json, '');
             applyTheme(readStorage(storageKeys.theme, 'light'));
             histories = readStorage(storageKeys.history, []);
+            jsonDocs = normalizeJsonDocs(readStorage(storageKeys.jsonDocs, null), readStorage(storageKeys.json, ''));
+            resetNextJsonDocId(jsonDocs);
             var draftQueries = normalizeQueries(readStorage(storageKeys.queries, []));
             if (!Array.isArray(histories)) {
                 histories = [];
             }
             histories = histories.map(function (item) {
+                var docs = normalizeJsonDocs(item.jsonDocs, item.json || '');
                 return {
                     id: item.id,
-                    title: item.title || getHistoryTitle(item.json || ''),
-                    json: item.json || '',
+                    title: item.title || getWorkspaceTitle(docs),
+                    json: item.json || (docs[0] ? docs[0].value : ''),
+                    jsonDocs: docs,
                     queries: normalizeQueries(item.queries),
                     updatedAt: item.updatedAt || Date.now()
                 };
             });
 
             var currentHistory = histories.find(function (item) {
-                return item.json === jsonInput.value;
+                return jsonDocsSignatureFromItem(item) === currentJsonDocsSignature();
             });
             activeHistoryId = currentHistory ? currentHistory.id : '';
             queries = currentHistory ? normalizeQueries(currentHistory.queries) : draftQueries;
@@ -2167,6 +2557,7 @@
             }
             resetNextIdFromQueries(queries);
             renderHistory();
+            renderJsonDocs();
             renderQueries();
             update();
         })();
