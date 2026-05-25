@@ -1686,7 +1686,7 @@
                 });
             }
 
-            function createHistoryItem(text, now) {
+            function createHistoryItem(now) {
                 return {
                     id: String(now) + '-' + Math.random().toString(16).slice(2),
                     title: getWorkspaceTitle(jsonDocs),
@@ -1699,6 +1699,7 @@
 
             function saveCurrentHistory(forceNew) {
                 if (!jsonDocs.some(function (doc) { return doc.value.trim(); })) {
+                    showCopyToast('Nothing to save');
                     return;
                 }
 
@@ -1727,12 +1728,12 @@
                         activeHistoryId = histories[existingIndex].id;
                         histories.unshift(histories.splice(existingIndex, 1)[0]);
                     } else {
-                        var savedItem = createHistoryItem(text, now);
+                        var savedItem = createHistoryItem(now);
                         histories.unshift(savedItem);
                         activeHistoryId = savedItem.id;
                     }
                 } else {
-                    var item = createHistoryItem(text, now);
+                    var item = createHistoryItem(now);
                     histories.unshift(item);
                     activeHistoryId = item.id;
                 }
@@ -1740,6 +1741,7 @@
                 histories = histories.slice(0, 30);
                 persistHistory();
                 renderHistory();
+                showCopyToast(forceNew ? 'Saved as new workspace' : 'Saved');
             }
 
             function getPlaceholder(query) {
