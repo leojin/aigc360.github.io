@@ -1926,6 +1926,21 @@
                 return JSON.stringify(value, null, 2);
             }
 
+            function getJsonViewText(value) {
+                if (value && typeof value === 'object') {
+                    return JSON.stringify(value, null, 2);
+                }
+                if (typeof value !== 'string') {
+                    return '';
+                }
+
+                var parsed = tryParseJsonString(value);
+                if (!parsed.ok) {
+                    return '';
+                }
+                return JSON.stringify(parsed.value, null, 2);
+            }
+
             function isLikelyImageUrl(value) {
                 var trimmed = typeof value === 'string' ? value.trim() : '';
                 if (!isHttpUrl(trimmed)) {
@@ -2049,6 +2064,16 @@
                 });
             }
 
+            function openFormattedJsonViewer(formatted) {
+                try {
+                    jsonViewContent.innerHTML = highlightJson(formatted);
+                } catch (error) {
+                    jsonViewContent.textContent = formatted;
+                    showCopyToast('Opened without highlight');
+                }
+                jsonViewModal.classList.add('open');
+            }
+
             function openJsonViewer(docId) {
                 var doc = getJsonDocById(Number(docId));
                 var text = doc ? doc.value.trim() : '';
@@ -2067,13 +2092,7 @@
                     return;
                 }
 
-                try {
-                    jsonViewContent.innerHTML = highlightJson(formatted);
-                } catch (error) {
-                    jsonViewContent.textContent = formatted;
-                    showCopyToast('Opened without highlight');
-                }
-                jsonViewModal.classList.add('open');
+                openFormattedJsonViewer(formatted);
             }
 
             function closeJsonViewer() {
@@ -2238,6 +2257,16 @@
                                 openButton.dataset.openUrl = match.value.trim();
                                 value.appendChild(document.createElement('br'));
                                 value.appendChild(openButton);
+                            }
+                            var jsonViewText = getJsonViewText(match.value);
+                            if (jsonViewText) {
+                                var jsonViewButton = document.createElement('button');
+                                jsonViewButton.className = 'preview-button';
+                                jsonViewButton.type = 'button';
+                                jsonViewButton.textContent = 'View JSON';
+                                jsonViewButton.dataset.viewJson = jsonViewText;
+                                value.appendChild(document.createElement('br'));
+                                value.appendChild(jsonViewButton);
                             }
 
                             var docBadge = document.createElement('div');
@@ -2422,6 +2451,8 @@
                         openImagePreview(preview.dataset.previewUrl);
                     } else if (preview.dataset.openUrl) {
                         window.open(preview.dataset.openUrl, '_blank', 'noopener,noreferrer');
+                    } else if (preview.dataset.viewJson) {
+                        openFormattedJsonViewer(preview.dataset.viewJson);
                     }
                     return;
                 }
