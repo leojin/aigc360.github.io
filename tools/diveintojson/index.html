@@ -1416,7 +1416,7 @@
                 return list.map(function (query) {
                     return {
                         id: query.id || nextId++,
-                        mode: query.mode === 'key' ? 'key' : 'value',
+                        mode: ['value', 'key', 'path'].indexOf(query.mode) === -1 ? 'value' : query.mode,
                         type: ['str', 'number', 'bool'].indexOf(query.type) === -1 ? 'str' : query.type,
                         value: query.value || '',
                         color: query.color || palette[Math.floor(Math.random() * palette.length)]
@@ -1561,7 +1561,8 @@
                     targetSelect.setAttribute('aria-label', 'Search target');
                     [
                         { value: 'value', text: 'Value' },
-                        { value: 'key', text: 'Key' }
+                        { value: 'key', text: 'Key' },
+                        { value: 'path', text: 'Path' }
                     ].forEach(function (item) {
                         var option = document.createElement('option');
                         option.value = item.value;
@@ -1573,6 +1574,7 @@
                     var select = document.createElement('select');
                     select.className = 'query-type';
                     select.setAttribute('aria-label', 'Value type');
+                    select.disabled = query.mode === 'path';
                     ['str', 'number', 'bool'].forEach(function (type) {
                         var option = document.createElement('option');
                         option.value = type;
@@ -1745,6 +1747,9 @@
             }
 
             function getPlaceholder(query) {
+                if (query.mode === 'path') {
+                    return 'Example: $[0] or $["items"][0]';
+                }
                 if (query.mode === 'key') {
                     return 'Enter key';
                 }
@@ -1765,6 +1770,9 @@
 
             function parseTarget(query) {
                 var raw = query.value.trim();
+                if (query.mode === 'path') {
+                    return { ok: raw.length > 0 && raw.charAt(0) === '$', value: raw, comparable: raw };
+                }
                 if (query.mode === 'key') {
                     return { ok: query.value.length > 0, value: query.value, comparable: query.value };
                 }
@@ -1794,7 +1802,7 @@
             }
 
             function isMatch(value, query, target) {
-                if (query.mode === 'key') {
+                if (query.mode !== 'value') {
                     return false;
                 }
                 if (primitiveType(value) !== query.type || !target.ok) {
@@ -1808,6 +1816,121 @@
 
             function isKeyMatch(key, query, target) {
                 return query.mode === 'key' && target.ok && key.indexOf(target.comparable) !== -1;
+            }
+
+            function findClosingBracket(path, start) {
+                var quote = '';
+                var escaped = false;
+                for (var index = start + 1; index < path.length; index++) {
+                    var char = path.charAt(index);
+                    if (escaped) {
+                        escaped = false;
+                        continue;
+                    }
+                    if (char === '\\') {
+                        escaped = true;
+                        continue;
+                    }
+                    if (quote) {
+                        if (char === quote) {
+                            quote = '';
+                        }
+                        continue;
+                    }
+                    if (char === '"' || char === "'") {
+                        quote = char;
+                        continue;
+                    }
+                    if (char === ']') {
+                        return index;
+                    }
+                }
+                return -1;
+            }
+
+            function parseBracketToken(token) {
+                var trimmed = token.trim();
+                if (!trimmed) {
+                    return { ok: false };
+                }
+                if (trimmed.charAt(0) === '"') {
+                    try {
+                        return { ok: true, key: JSON.parse(trimmed) };
+                    } catch (error) {
+                        return { ok: false };
+                    }
+                }
+                if (trimmed.charAt(0) === "'" && trimmed.charAt(trimmed.length - 1) === "'") {
+                    return { ok: true, key: trimmed.slice(1, -1).replace(/\\'/g, "'").replace(/\\\\/g, '\\') };
+                }
+                if (/^-?\d+$/.test(trimmed)) {
+                    return { ok: true, key: Number(trimmed) };
+                }
+                return { ok: false };
+            }
+
+            function evaluatePath(root, path) {
+                var current = root;
+                var index = 0;
+                if (!path || path.charAt(index) !== '$') {
+                    return { ok: false };
+                }
+                index += 1;
+
+                while (index < path.length) {
+                    if (path.slice(index, index + 8) === '.parse()') {
+                        var parsed = tryParseJsonString(current);
+                        if (!parsed.ok) {
+                            return { ok: false };
+                        }
+                        current = parsed.value;
+                        index += 8;
+                        continue;
+                    }
+
+                    if (path.charAt(index) === '.') {
+                        var nextDot = path.indexOf('.', index + 1);
+                        var nextBracket = path.indexOf('[', index + 1);
+                        var nextIndex = path.length;
+                        if (nextDot !== -1) {
+                            nextIndex = Math.min(nextIndex, nextDot);
+                        }
+                        if (nextBracket !== -1) {
+                            nextIndex = Math.min(nextIndex, nextBracket);
+                        }
+                        var key = path.slice(index + 1, nextIndex);
+                        if (!key) {
+                            return { ok: false };
+                        }
+                        if (current == null || !(key in Object(current))) {
+                            return { ok: false };
+                        }
+                        current = current[key];
+                        index = nextIndex;
+                        continue;
+                    }
+
+                    if (path.charAt(index) === '[') {
+                        var closeIndex = findClosingBracket(path, index);
+                        if (closeIndex === -1) {
+                            return { ok: false };
+                        }
+                        var token = parseBracketToken(path.slice(index + 1, closeIndex));
+                        if (!token.ok) {
+                            return { ok: false };
+                        }
+                        if (current == null || !(token.key in Object(current))) {
+                            return { ok: false };
+                        }
+                        current = current[token.key];
+                        index = closeIndex + 1;
+                        continue;
+                    }
+
+                    return { ok: false };
+                }
+
+                return { ok: true, value: current };
             }
 
             function formatPathPart(key) {
@@ -1998,8 +2121,10 @@
 
             function labelFor(query) {
                 var value = query.value === '' ? '(empty)' : query.value;
-                var target = query.mode === 'key' ? 'Key' : 'Value';
-                return target + ' / ' + query.type + ' / ' + value;
+                if (query.mode === 'path') {
+                    return 'Path / ' + value;
+                }
+                return (query.mode === 'key' ? 'Key' : 'Value') + ' / ' + query.type + ' / ' + value;
             }
 
             function displayPath(path) {
@@ -2173,7 +2298,18 @@
                     if (Array.isArray(dataDocs) && dataDocs.length && target.ok) {
                         dataDocs.forEach(function (doc) {
                             var docMatches = [];
-                            walk(doc.data, '$', query, target, docMatches);
+                            if (query.mode === 'path') {
+                                var pathMatch = evaluatePath(doc.data, target.value);
+                                if (pathMatch.ok) {
+                                    docMatches.push({
+                                        path: target.value,
+                                        value: pathMatch.value,
+                                        kind: 'path'
+                                    });
+                                }
+                            } else {
+                                walk(doc.data, '$', query, target, docMatches);
+                            }
                             docMatches.forEach(function (match) {
                                 match.docLabel = doc.label;
                                 matches.push(match);
@@ -2231,7 +2367,7 @@
                             var renderedValue = displayValue(match.value);
                             value.dataset.copyText = renderedValue;
                             value.title = 'Click to copy';
-                            if (match.kind === 'key') {
+                            if (match.kind === 'key' || match.kind === 'path') {
                                 value.textContent = renderedValue;
                             } else {
                                 appendHighlightedText(
@@ -2373,7 +2509,7 @@
                 }
                 if (event.target.classList.contains('query-target')) {
                     query.mode = event.target.value;
-                    row.querySelector('.query-value').placeholder = getPlaceholder(query);
+                    renderQueries();
                     persistQueries();
                     update();
                 } else if (event.target.classList.contains('query-type')) {
